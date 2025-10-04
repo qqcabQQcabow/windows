@@ -5,7 +5,7 @@ from pydantic import BaseModel
 
 SECRET_KEY = "AladinGalendaGubin-AGG-GAG-GGA"
 ALGORITHM = "HS256"
-LIFE_TIME_SEC = 10
+LIFE_TIME_SEC = 24*3600*30
 
 
 class JWTPayload(BaseModel):
