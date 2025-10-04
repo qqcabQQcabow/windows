@@ -214,4 +214,5 @@ def change_password_hash(login: str, new_hash: str) -> bool:
                 return res
 
         except Exception:
+            con.rollback()
             return False
