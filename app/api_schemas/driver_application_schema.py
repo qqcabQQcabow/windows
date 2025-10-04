@@ -7,9 +7,8 @@ class ContainerType(str, Enum):
     LARGE = "LARGE"
 
 
+
 class DriverApplication(BaseModel):
-    # id: int
-    submission_time: int
     container_type: ContainerType
     container_count: int
     container_submission_time: int
@@ -28,3 +27,17 @@ class DriverApplication(BaseModel):
     unloading_contact_full_name: str
     unloading_contact_phone: str
     notes: str
+
+class DriverApplicationStateType(str, Enum):
+   APPLICATION           ='APPLICATION'
+   TERMINAL              ='TERMINAL'
+   WAREHOUSE             ='WAREHOUSE'
+   DEPARTURE_STATION     ='DEPARTURE_STATION'
+   DESTINATION_STATION   ='DESTINATION_STATION'
+   CARGO_DELIVERY        ='CARGO_DELIVERY'
+   EMPTY_CONTAINER_RETURN='EMPTY_CONTAINER_RETURN'
+
+
+class DriverApplicationState(BaseModel):
+    application_id: int
+    state_name: DriverApplicationStateType

@@ -31,7 +31,6 @@ async def registr_driver(data: DriverRegistrInfo):
 
 
 
-
 @router.post("/users/registrLogist", tags=["users"])
 async def registr_logist(data: LogistRegistrInfo):
     err = execute_registr_logits(data)

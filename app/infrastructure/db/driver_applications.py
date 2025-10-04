@@ -1,6 +1,7 @@
 from .pool import pool, CONSTRAINT_MESSAGES
 import psycopg
 from ...api_schemas.driver_application_schema import DriverApplication
+from ...api_schemas.driver_application_schema import DriverApplicationState
 
 from typing import Optional, Any
 
@@ -47,13 +48,13 @@ def create_driver_application(logist_login: str, data: DriverApplication):
                 cur.execute(
                         """
                     INSERT INTO DRIVER_APPLICATIONS (
-                        driver_login, logist_login, submission_time, container_submission_time,
+                        driver_login, logist_login, created_time, container_submission_time,
                         container_type, container_count, container_loading_address, loading_contact,
                         shipper_name, shipper_address, cargo_name, cargo_package_count, cargo_weight,
                         departure_station_name, destination_station_name, consignee_name, consignee_address,
                         unloading_contact, notes
                     ) VALUES (
-                        %(driver_login)s, %(logist_login)s, to_timestamp(%(submission_time)s), 
+                        %(driver_login)s, %(logist_login)s, NOW(), 
                         to_timestamp(%(container_submission_time)s),
                         %(container_type)s, %(container_count)s, %(container_loading_address)s, %(loading_contact)s,
                         %(shipper_name)s, %(shipper_address)s, %(cargo_name)s, %(cargo_package_count)s, %(cargo_weight)s,
@@ -66,7 +67,6 @@ def create_driver_application(logist_login: str, data: DriverApplication):
                     {
                     "driver_login": None,
                     "logist_login": logist_login,
-                    "submission_time": data.submission_time,
                     "container_submission_time": data.container_submission_time,
                     "container_type": data.container_type.value,
                     "container_count": data.container_count,
@@ -151,8 +151,10 @@ def get_wait_info(application_id: int) -> Optional[dict[str, str]]:
     return None
 
 
-def start_await(application_id: int, driver_login: str):
+def start_await(application_id: int, driver_login: str) -> bool:
     """
+    Return True if succes.
+    Return False if bad
     """
     with pool.connection() as con:
         try:
@@ -173,6 +175,12 @@ def start_await(application_id: int, driver_login: str):
                         {"application_id": application_id, "driver_login": driver_login},
                 )
 
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
         except psycopg.Error as e:
             con.rollback()
             constraint_name = getattr(e.diag, "constraint_name", None)
@@ -182,6 +190,7 @@ def start_await(application_id: int, driver_login: str):
         except Exception as e:
             con.rollback()
             raise e
+
 
 
 def get_current_state(application_id: int) -> Optional[dict[str, str]]:
@@ -220,6 +229,7 @@ def get_current_state(application_id: int) -> Optional[dict[str, str]]:
             return None
     return None
 
+
 def get_all_states(application_id: int) -> list[dict[Any, Any]]:
     '''
     Return current state
@@ -249,3 +259,85 @@ def get_all_states(application_id: int) -> list[dict[Any, Any]]:
         except Exception:
             return []
     return []
+
+
+def init_driver_state(state: DriverApplicationState) -> bool:
+
+    """
+    Return True if succes.
+    Return False if bad
+    """
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        insert into DRIVER_APPLICATION_STATES(application_id, state_name, time_in, driver_login)
+                        values(%(application_id)s, %(state_name)s, NOW() )
+
+                        """,
+
+                        {"application_id": state.application_id,
+                         "state_name": state.state_name},
+                )
+
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+
+def out_driver_state(state: DriverApplicationState) -> bool:
+
+    """
+    Return True if succes.
+    Return False if bad
+    """
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        UPDATE driver_application_states
+
+                        SET time_out = NOW()
+
+                        WHERE application_id = %(application_id)s and
+                              state_name = %(state_name)s;
+
+                        """,
+
+                        {"application_id": state.application_id,
+                         "state_name": state.state_name},
+                )
+
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+

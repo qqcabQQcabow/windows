@@ -45,13 +45,19 @@ CREATE TABLE USERS (
     born_date TIMESTAMP NOT NULL
 );
 
+
+
 CREATE TABLE LOGISTS (
     user_login VARCHAR(128) PRIMARY KEY NULL,
     FOREIGN KEY (user_login) REFERENCES USERS(login)
 );
 
+
+
 CREATE TABLE DRIVERS (
     raiting INT NOT NULL,
+
+    at_work BOOLEAN NOT NULL,
 
     passport_numbers VARCHAR(11) NOT NULL,
     CONSTRAINT passport_rf_format CHECK (passport_numbers ~ '^\d{4} \d{6}$'),
@@ -68,6 +74,20 @@ CREATE TABLE DRIVERS (
     user_login TEXT PRIMARY KEY NOT NULL,
     FOREIGN KEY (user_login) REFERENCES USERS(login)
 );
+
+
+
+
+CREATE TABLE DRIVER_WORK_SHIFTS (
+
+    driver_login TEXT PRIMARY KEY NOT NULL,
+    FOREIGN KEY (driver_login) REFERENCES DRIVERS(user_login)
+
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP,
+);
+
+
 
 CREATE TABLE TRACKS (
     GRZ VARCHAR(16) PRIMARY KEY,
@@ -96,12 +116,13 @@ CREATE TABLE DRIVER_APPLICATIONS (
     awaiting_until TIMESTAMP,
     
     -- даты
-    submission_time TIMESTAMP NOT NULL,
-    container_submission_time TIMESTAMP NOT NULL,
+    created_time TIMESTAMP NOT NULL,
+    accepted_time TIMESTAMP,
     
     -- контейнер
     container_type container_type_enum NOT NULL,
     container_count INT NOT NULL,
+    container_submission_time TIMESTAMP NOT NULL,
     
     -- погрузка
     container_loading_address VARCHAR(2048) NOT NULL,
@@ -141,13 +162,17 @@ CREATE TYPE driver_application_state_enum AS ENUM (
 
 
 CREATE TABLE DRIVER_APPLICATION_STATES (
-    id SERIAL PRIMARY KEY,
     application_id INT NOT NULL,
-    FOREIGN KEY (application_id) REFERENCES DRIVER_APPLICATIONS(id),
-
     state_name driver_application_state_enum NOT NULL,
+
+    -- driver_login VARCHAR(128),
+    -- FOREIGN KEY (driver_login) REFERENCES DRIVERS(user_login),
 
     photos VARCHAR(256),
     document_photos VARCHAR(256),
-    state_date TIMESTAMP NOT NULL
+    time_in TIMESTAMP NOT NULL,
+    time_out TIMESTAMP,
+
+    PRIMARY KEY (application_id, state_name),
+    FOREIGN KEY (application_id) REFERENCES DRIVER_APPLICATIONS(id),
 );

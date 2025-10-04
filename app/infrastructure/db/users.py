@@ -60,8 +60,6 @@ def add_logist(data: LogistRegistrInfo, hash_p: str, salt_p: str):
             raise e
 
 
-
-
 def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
 
     '''
@@ -123,8 +121,6 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
             raise e
 
 
-
-
 def get_user(login: str) -> Optional[dict]:
 
     '''
@@ -171,6 +167,7 @@ def get_role(login: str) -> Optional[str]:
 
             return res[0]
 
+
 def get_password_hash_and_salt(login: str) -> Optional[Tuple[str, str]]:
 
     '''
@@ -191,8 +188,7 @@ def get_password_hash_and_salt(login: str) -> Optional[Tuple[str, str]]:
             return hash_p_and_s
 
 
-
-def change_password_hash(login: str, new_hash: str) -> bool:
+def change_password_hash(login: str, new_hash: str, new_salt: str) -> bool:
 
     '''
     Return true, if succes update
@@ -205,13 +201,16 @@ def change_password_hash(login: str, new_hash: str) -> bool:
             with con.cursor() as cur:
 
                 cur.execute(
-                    "UPDATE users SET hash_password = %(login)s WHERE login = %(new_hash)s",
-                    {"login": login, "new_hash": new_hash},
+                    "UPDATE users SET hash_password = %(new_hash)s, hash_salt = %(new_salt)s WHERE login = %(login)s",
+                    {"login": login, "new_hash": new_hash, "new_salt": new_salt},
                 )
 
-                res = cur.rowcount > 0
-                con.commit()
-                return res
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
 
         except Exception:
             con.rollback()
