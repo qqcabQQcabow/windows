@@ -81,10 +81,10 @@ CREATE TABLE DRIVERS (
 CREATE TABLE DRIVER_WORK_SHIFTS (
 
     driver_login TEXT PRIMARY KEY NOT NULL,
-    FOREIGN KEY (driver_login) REFERENCES DRIVERS(user_login)
+    FOREIGN KEY (driver_login) REFERENCES DRIVERS(user_login),
 
     start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP,
+    end_time TIMESTAMP
 );
 
 
@@ -174,5 +174,5 @@ CREATE TABLE DRIVER_APPLICATION_STATES (
     time_out TIMESTAMP,
 
     PRIMARY KEY (application_id, state_name),
-    FOREIGN KEY (application_id) REFERENCES DRIVER_APPLICATIONS(id),
+    FOREIGN KEY (application_id) REFERENCES DRIVER_APPLICATIONS(id)
 );
