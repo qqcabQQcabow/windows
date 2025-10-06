@@ -274,7 +274,7 @@ def init_driver_state(state: DriverApplicationState) -> bool:
                 cur.execute(
                         """
 
-                        insert into DRIVER_APPLICATION_STATES(application_id, state_name, time_in, driver_login)
+                        insert into DRIVER_APPLICATION_STATES(application_id, state_name, time_in)
                         values(%(application_id)s, %(state_name)s, NOW() )
 
                         """,
