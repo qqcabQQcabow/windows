@@ -16,7 +16,9 @@ def create_da(causer: JWTPayload, data: DriverApplication) -> Optional[str]:
         
         create_driver_application(causer.login, data)
 
+        return None
+
+
     except Exception as e:
         return f"Ошибка. {e}"
 
-    return None

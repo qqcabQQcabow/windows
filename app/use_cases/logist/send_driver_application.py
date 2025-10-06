@@ -1,4 +1,4 @@
-from ...infrastructure.db.driver_applications import start_await, get_current_state
+from ...infrastructure.db.driver_applications import start_await, get_current_state, exist_with_await_driver
 from ...infrastructure.db.drivers import driver_at_work
 from ...infrastructure.db.users import get_user
 from ...infrastructure.auth_utils import JWTPayload
@@ -24,6 +24,9 @@ def send_application_to_driver(causer: JWTPayload, data: SendDriverApplication) 
         
         if not driver_at_work(data.driver_login):
             return f"Водитель не на работе"
+
+        if exist_with_await_driver(data.driver_login):
+            return f"Водитель уже имеет заявку на подтверждение"
 
         if not start_await(data.application_id, data.driver_login):
             return f"Не удалось отправить заявку водителю"

@@ -1,11 +1,7 @@
 from fastapi import APIRouter, Depends
 from app.dependencies import get_current_user, JWTPayload
 
-from app.api_schemas.user_login_schema import LoginInfo
-from app.api_schemas.user_driver_regist_schema import DriverRegistrInfo
-from app.api_schemas.user_logist_registr_schema import LogistRegistrInfo
-
-from ..use_cases.drivers import work_shifts
+from ..use_cases.drivers import work_shifts, handle_application
 
 
 router = APIRouter()
@@ -16,12 +12,26 @@ router = APIRouter()
 async def start_work_s(causer: JWTPayload = Depends(get_current_user)):
     err = work_shifts.start_driver_work_shift_use_case(causer)
     if err is not None:
-        return {"error", err}
+        return {"error": err}
     return {"response": "success"}
 
 @router.get("/drivers/stopWorkShift", tags=["drivers"])
 async def stop_work_s(causer: JWTPayload = Depends(get_current_user)):
     err = work_shifts.end_driver_work_shift_use_case(causer)
     if err is not None:
-        return {"error", err}
+        return {"error": err}
+    return {"response": "success"}
+
+@router.get("/drivers/acceptDA", tags=["drivers"])
+async def accept_da(causer: JWTPayload = Depends(get_current_user)):
+    err = handle_application.accept(causer)
+    if err is not None:
+        return {"error": err}
+    return {"response": "success"}
+
+@router.get("/drivers/rejectDA", tags=["drivers"])
+async def reject_da(causer: JWTPayload = Depends(get_current_user)):
+    err = handle_application.reject(causer)
+    if err is not None:
+        return {"error": err}
     return {"response": "success"}

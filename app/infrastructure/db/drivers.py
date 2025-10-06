@@ -16,7 +16,7 @@ def start_driver_work_shift(login: str) -> bool:
             with con.cursor() as cur:
 
                 cur.execute(
-                    "UPDATE DRIVERS SET at_work = TRUE WHERE login = %(login)s",
+                    "UPDATE DRIVERS SET at_work = TRUE WHERE user_login = %(login)s",
                     {"login": login},
                 )
 
@@ -124,7 +124,7 @@ def driver_at_work(driver_login: str) -> bool:
 
     with pool.connection() as con:
         with con.cursor() as cur:
-            cur.execute("select * from drivers where user_login = %(login)s) and at_work = TRUE",
+            cur.execute("select 1 from drivers where user_login = %(login)s and at_work = TRUE LIMIT 1",
                         {"login": driver_login},
                         )
     

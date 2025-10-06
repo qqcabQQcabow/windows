@@ -94,9 +94,9 @@ def create_driver_application(logist_login: str, data: DriverApplication):
                 # INSERT начального статуса в DRIVER_APPLICATION_STATES
                 cur.execute("""
                     INSERT INTO DRIVER_APPLICATION_STATES (
-                        application_id, state_name, state_date
+                        application_id, state_name, time_in,time_out, photos, document_photos
                     ) VALUES (
-                        %(application_id)s, 'APPLICATION', NOW()
+                        %(application_id)s, 'APPLICATION', NOW(), NULL, NULL, NULL
                     )
                 """, {"application_id": application_id})
 
@@ -209,7 +209,7 @@ def get_current_state(application_id: int) -> Optional[dict[str, str]]:
                         SELECT s.*
                         FROM DRIVER_APPLICATION_STATES s
                         WHERE s.application_id = %(application_id)s
-                        ORDER BY s.state_date DESC
+                        ORDER BY s.time_in DESC
                         LIMIT 1;
 
                         """,
@@ -225,9 +225,11 @@ def get_current_state(application_id: int) -> Optional[dict[str, str]]:
                 if cur.description:
                     colnames = [desc[0] for desc in cur.description]
                     return dict(zip(colnames, state))
+
+                return None
+
         except Exception:
             return None
-    return None
 
 
 def get_all_states(application_id: int) -> list[dict[Any, Any]]:
@@ -341,3 +343,158 @@ def out_driver_state(state: DriverApplicationState) -> bool:
             con.rollback()
             raise e
 
+def exist_with_await_driver(driver_login: str) -> bool:
+    '''
+    Return True, if exist with driver_login
+    Return false else
+    '''
+
+    with pool.connection() as con:
+        with con.cursor() as cur:
+            cur.execute("select 1 from driver_applications where awaiting_driver_login = %(login)s and awaiting_until > NOW() LIMIT 1",
+                        {"login": driver_login},
+                        )
+    
+
+            data = cur.fetchone()
+            return data != None
+
+def reject_by_driver(driver_login: str) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        UPDATE driver_applications
+
+                        SET awaiting_driver_login = NULL, awaiting_until = NULL
+
+                        WHERE awaiting_driver_login = %(login)s
+
+                        """,
+
+                        {"login": driver_login},
+                )
+
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+
+
+
+def accept_by_driver(driver_login: str) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        UPDATE driver_applications
+
+                        SET driver_login = %(login)s, accepted_time = NOW(), awaiting_driver_login = NULL, awaiting_until = NULL
+
+                        WHERE awaiting_driver_login = %(login)s
+
+                        """,
+
+                        {"login": driver_login},
+                )
+
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+
+
+def can_accept(driver_login: str) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        select 1 from DRIVER_APPLICATIONS 
+
+                        WHERE awaiting_driver_login = %(login)s
+                        and awaiting_until > NOW()
+
+                        LIMIT 1
+
+
+                        """,
+
+                        {"login": driver_login},
+                )
+
+                return cur.rowcount > 0
+
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+
+
+def can_reject(driver_login: str) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        select 1 from DRIVER_APPLICATIONS 
+
+                        WHERE awaiting_driver_login = %(login)s
+                        and awaiting_until > NOW()
+
+                        LIMIT 1
+
+
+                        """,
+
+                        {"login": driver_login},
+                )
+
+                return cur.rowcount > 0
+
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e

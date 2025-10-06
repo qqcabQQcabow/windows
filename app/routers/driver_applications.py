@@ -10,7 +10,7 @@ router = APIRouter()
 async def create_driver_app(drive_app: DriverApplication, causer: JWTPayload = Depends(get_current_user)):
     err = create.create_da(causer, drive_app)
     if err is not None:
-        return {"error", err}
+        return {"error": err}
 
     return {"response": "success"}
 
@@ -18,14 +18,14 @@ async def create_driver_app(drive_app: DriverApplication, causer: JWTPayload = D
 async def init_da_state(drive_app: DriverApplicationState, causer: JWTPayload = Depends(get_current_user)):
     err = change_state.init_state_use_case(causer, drive_app)
     if err is not None:
-        return {"error", err}
+        return {"error": err}
     return {"response": "success"}
 
 @router.post("/driverApplications/outState", tags=["driver_applications"])
 async def out_da_state(drive_app: DriverApplicationState, causer: JWTPayload = Depends(get_current_user)):
     err = change_state.out_state_use_case(causer, drive_app)
     if err is not None:
-        return {"error", err}
+        return {"error": err}
     return {"response": "success"}
 
 @router.get("/driverApplications/all", tags=["driver_applications"])

@@ -112,7 +112,7 @@ CREATE TABLE DRIVER_APPLICATIONS (
     FOREIGN KEY (logist_login) REFERENCES LOGISTS(user_login),
 
     -- Ожидание приёма заявки
-    awaiting_driver_login VARCHAR(128),
+    awaiting_driver_login VARCHAR(128) UNIQUE,
     awaiting_until TIMESTAMP,
     
     -- даты
