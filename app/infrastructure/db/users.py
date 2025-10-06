@@ -83,6 +83,7 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
     driver_data = {
         "user_login": data.login,
         "raiting": 0,
+        "at_work": False,
         "passport_numbers": data.passport_numbers,
         "driver_license_numbers": data.driver_license_numbers,
         "job_license_numbers": data.job_license_numbers,
@@ -100,9 +101,9 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
                 """, user_data)
 
                 cur.execute("""
-                    insert into drivers (user_login, raiting, passport_numbers, driver_license_numbers,
+                    insert into drivers (at_work, user_login, raiting, passport_numbers, driver_license_numbers,
                                          job_license_numbers, snils_number)
-                    values (%(user_login)s, %(raiting)s, %(passport_numbers)s, %(driver_license_numbers)s,
+                    values (%(at_work)s, %(user_login)s, %(raiting)s, %(passport_numbers)s, %(driver_license_numbers)s,
                             %(job_license_numbers)s, %(snils_number)s)
                 """, driver_data)
 

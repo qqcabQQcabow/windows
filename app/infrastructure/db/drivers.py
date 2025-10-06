@@ -115,3 +115,21 @@ def get_driver(login: str) -> Optional[dict]:
                 return rows
 
             return None
+
+def driver_at_work(driver_login: str) -> bool:
+    '''
+    Return True, if at_work true
+    Return false else
+    '''
+
+    with pool.connection() as con:
+        with con.cursor() as cur:
+            cur.execute("select * from drivers where user_login = %(login)s) and at_work = TRUE",
+                        {"login": driver_login},
+                        )
+    
+
+            data = cur.fetchone()
+            return data != None
+
+

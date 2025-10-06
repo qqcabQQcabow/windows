@@ -41,3 +41,8 @@ class DriverApplicationStateType(str, Enum):
 class DriverApplicationState(BaseModel):
     application_id: int
     state_name: DriverApplicationStateType
+
+
+class SendDriverApplication(BaseModel):
+    application_id: int
+    driver_login: str
