@@ -1,4 +1,4 @@
-from ...infrastructure.auth_utils import JWTPayload
+from ...infrastructure.auth_utils import JWTPayload, RoleEnum
 from ...infrastructure.db.driver_applications import accept_by_driver, can_accept
 
 from typing import Optional
@@ -6,7 +6,7 @@ from typing import Optional
 
 def accept(causer: JWTPayload) -> Optional[str]:
 
-    if causer.role != 'DRIVER':
+    if causer.role != RoleEnum.DRIVER:
         return f"Нет прав"
 
     try:
@@ -24,7 +24,7 @@ def accept(causer: JWTPayload) -> Optional[str]:
 
 def reject(causer: JWTPayload) -> Optional[str]:
 
-    if causer.role != 'DRIVER':
+    if causer.role != RoleEnum.DRIVER:
         return f"Нет прав"
 
     try:

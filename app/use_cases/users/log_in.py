@@ -1,6 +1,6 @@
 from ...infrastructure.db.users import get_password_hash_and_salt, get_role
 
-from ...infrastructure.auth_utils import create_jwt_token
+from ...infrastructure.auth_utils import create_jwt_token, RoleEnum
 
 import bcrypt
 
@@ -29,9 +29,9 @@ def execute_log_in(data: LoginInfo) -> Tuple[str, Optional[str]]:
 
         role = get_role(data.login)
         if role is None:
-            return ("", "Не найден пользователь")
+            return ("", "Не удалось получить роль")
 
-        token = create_jwt_token(data.login, role);
+        token = create_jwt_token(data.login, RoleEnum(role));
 
         return (token, None)
 

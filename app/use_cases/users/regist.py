@@ -1,13 +1,12 @@
 from ...infrastructure.db.users import get_user, add_driver, add_logist
 
-from ...infrastructure.auth_utils import create_jwt_token
 
 from ...api_schemas.user_driver_regist_schema import DriverRegistrInfo
 from ...api_schemas.user_logist_registr_schema import LogistRegistrInfo
 
 import bcrypt
 
-from typing import Tuple, Optional
+from typing import Optional
 
 
 def execute_registr_driver(data: DriverRegistrInfo) -> Optional[str]:

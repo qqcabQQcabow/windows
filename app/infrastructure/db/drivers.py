@@ -1,8 +1,43 @@
 from psycopg import cursor
 from .pool import pool, CONSTRAINT_MESSAGES
 
-from typing import Optional
+from typing import Optional, Any
 
+def retrieve_all_drivers() -> list[dict[Any, Any]]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                cur.execute(
+                        """
+
+                        SELECT
+                            d.user_login,
+                            d.raiting,
+                            d.at_work,
+                            d.passport_numbers,
+                            d.driver_license_numbers,
+                            d.job_license_numbers,
+                            d.snils_number,
+                            u.phone,
+                            u.email,
+                            u.name,
+                            u.surname,
+                            u.patronymic,
+                            u.role,
+                            u.born_date
+                        FROM drivers AS d
+                        JOIN users  AS u ON u.login = d.user_login
+                        ORDER BY u.surname, u.name;
+
+                        """
+                )
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
+                    return rows
+        except Exception:
+            return []
+    return []
 
 def start_driver_work_shift(login: str) -> bool:
 
@@ -101,7 +136,7 @@ def get_driver(login: str) -> Optional[dict]:
 
     with pool.connection() as con:
         with con.cursor() as cur:
-            cur.execute("select * from drivers, users where drivers.user_login = users.login and users.login = %(login)s)",
+            cur.execute("select 1 from drivers, users where drivers.user_login = users.login and users.login = %(login)s)",
                         {"login": login},
                         )
 

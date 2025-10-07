@@ -1,6 +1,6 @@
 
 from ...api_schemas.driver_application_schema import DriverApplicationState
-from ...infrastructure.auth_utils import JWTPayload
+from ...infrastructure.auth_utils import JWTPayload, RoleEnum
 from ...infrastructure.db.driver_applications import init_driver_state, out_driver_state
 
 from typing import Optional
@@ -10,7 +10,7 @@ from typing import Optional
 def init_state_use_case(causer: JWTPayload, new_state: DriverApplicationState) -> Optional[str]:
     try:
 
-        if causer.role != "DRIVER":
+        if causer.role != RoleEnum.DRIVER:
             return "Только водитель может изменить состояние заявки"
 
         success = init_driver_state(new_state)
@@ -26,7 +26,7 @@ def init_state_use_case(causer: JWTPayload, new_state: DriverApplicationState) -
 def out_state_use_case(causer: JWTPayload, new_state: DriverApplicationState) -> Optional[str]:
     try:
 
-        if causer.role != "DRIVER":
+        if causer.role != RoleEnum.DRIVER:
             return "Только водитель может изменить состояние заявки"
 
         success = out_driver_state(new_state)

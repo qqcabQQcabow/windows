@@ -18,9 +18,6 @@ def retrieve_all_for_driver(login: str) -> list[dict[Any, Any]]:
             return []
     return []
 
-
-
-
 def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
@@ -33,9 +30,6 @@ def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
         except Exception:
             return []
     return []
-
-
-
 
 def create_driver_application(logist_login: str, data: DriverApplication):
     """
@@ -115,7 +109,6 @@ def create_driver_application(logist_login: str, data: DriverApplication):
             con.rollback()
             raise e
 
-
 def get_wait_info(application_id: int) -> Optional[dict[str, str]]:
     '''
     Return current info about wait driver
@@ -149,7 +142,6 @@ def get_wait_info(application_id: int) -> Optional[dict[str, str]]:
         except Exception:
             return None
     return None
-
 
 def start_await(application_id: int, driver_login: str) -> bool:
     """
@@ -191,8 +183,6 @@ def start_await(application_id: int, driver_login: str) -> bool:
             con.rollback()
             raise e
 
-
-
 def get_current_state(application_id: int) -> Optional[dict[str, str]]:
     '''
     Return current state
@@ -230,38 +220,6 @@ def get_current_state(application_id: int) -> Optional[dict[str, str]]:
 
         except Exception:
             return None
-
-
-def get_all_states(application_id: int) -> list[dict[Any, Any]]:
-    '''
-    Return current state
-    If cant found state return None
-    '''
-    with pool.connection() as con:
-        try:
-            with con.cursor() as cur:
-
-                cur.execute(
-
-                        """
-                        SELECT s.*
-                        FROM DRIVER_APPLICATION_STATES s
-                        WHERE s.application_id = %(application_id)s
-                        ORDER BY s.state_date DESC;
-                        """,
-
-                        {"application_id": application_id}
-
-                        )
-
-                if cur.description:
-                    colnames = [desc[0] for desc in cur.description]
-                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
-                    return rows
-        except Exception:
-            return []
-    return []
-
 
 def init_driver_state(state: DriverApplicationState) -> bool:
 
@@ -394,8 +352,6 @@ def reject_by_driver(driver_login: str) -> bool:
             con.rollback()
             raise e
 
-
-
 def accept_by_driver(driver_login: str) -> bool:
     with pool.connection() as con:
         try:
@@ -431,7 +387,6 @@ def accept_by_driver(driver_login: str) -> bool:
             con.rollback()
             raise e
 
-
 def can_accept(driver_login: str) -> bool:
     with pool.connection() as con:
         try:
@@ -465,7 +420,6 @@ def can_accept(driver_login: str) -> bool:
             con.rollback()
             raise e
 
-
 def can_reject(driver_login: str) -> bool:
     with pool.connection() as con:
         try:
@@ -485,6 +439,138 @@ def can_reject(driver_login: str) -> bool:
                         """,
 
                         {"login": driver_login},
+                )
+
+                return cur.rowcount > 0
+
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+
+def change_driver(application_id: int, new_driver_login: str) -> bool:
+    """
+    Return True if succes.
+    Return False if bad
+    """
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        UPDATE driver_applications
+
+                        SET driver_login = %(new_driver_login)s,
+                            awaiting_until = NULL,
+                            awaiting_driver_login = NULL
+
+                        WHERE id = %(application_id)s
+
+                        """,
+
+                        {"application_id": application_id, "new_driver_login": new_driver_login},
+                )
+
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+
+def retrieve_all_states(application_id: int) -> list[dict[Any, Any]]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                cur.execute(
+                        """
+                            SELECT
+                                das.state_name,
+                                das.photos,
+                                das.document_photos,
+                                das.time_in,
+                                das.time_out
+                            FROM driver_application_states as das
+                            WHERE das.application_id = %(application_id)s
+                        """,
+                        {"application_id": application_id}
+                )
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
+                    return rows
+        except Exception:
+            return []
+    return []
+
+def contains_driver(application_id: int, driver_login: str) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        select 1 from DRIVER_APPLICATIONS 
+
+                        WHERE driver_login = %(login)s
+                        and id = %(application_id)s
+
+                        LIMIT 1
+
+
+                        """,
+
+                        {"login": driver_login, "application_id": application_id},
+                )
+
+                return cur.rowcount > 0
+
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+        except Exception as e:
+            con.rollback()
+            raise e
+
+def contains_logist(application_id: int, logist_login: str) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                        """
+
+                        select 1 from DRIVER_APPLICATIONS 
+
+                        WHERE logist_login = %(login)s
+                        and id = %(application_id)s
+
+                        LIMIT 1
+
+
+                        """,
+
+                        {"login": logist_login, "application_id": application_id},
                 )
 
                 return cur.rowcount > 0

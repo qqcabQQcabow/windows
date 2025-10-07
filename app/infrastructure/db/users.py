@@ -5,6 +5,7 @@ import psycopg
 from typing import Optional, Tuple
 from ...api_schemas.user_driver_regist_schema import DriverRegistrInfo
 from ...api_schemas.user_logist_registr_schema import LogistRegistrInfo
+from ...infrastructure.auth_utils import RoleEnum
 
 def add_logist(data: LogistRegistrInfo, hash_p: str, salt_p: str):
 
@@ -22,7 +23,7 @@ def add_logist(data: LogistRegistrInfo, hash_p: str, salt_p: str):
         "name": data.name,
         "surname": data.surname,
         "patronymic": data.patronymic,
-        "role": "LOGIST",
+        "role": RoleEnum.LOGIST,
         "born_date": data.born_date
     }
 
@@ -76,7 +77,7 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
         "name": data.name,
         "surname": data.surname,
         "patronymic": data.patronymic,
-        "role": "DRIVER",
+        "role": RoleEnum.DRIVER,
         "born_date": data.born_date
     }
 

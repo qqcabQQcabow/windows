@@ -46,3 +46,8 @@ class DriverApplicationState(BaseModel):
 class SendDriverApplication(BaseModel):
     application_id: int
     driver_login: str
+
+class ChangeApplicationDriver(BaseModel):
+    application_id: int
+    new_driver_login: str
+
