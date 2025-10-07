@@ -1,4 +1,14 @@
 from psycopg_pool import ConnectionPool
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+host = os.getenv("host")
+port =  os.getenv("port")
+dbname =  os.getenv("dbname")
+user =  os.getenv("user")
+password =  os.getenv("password")
 
 CONSTRAINT_MESSAGES = {
     # USERS
@@ -32,4 +42,4 @@ CONSTRAINT_MESSAGES = {
 }
 
 # some connect settings
-pool = ConnectionPool("host=localhost port=5432 dbname=logist")
+pool = ConnectionPool("host={host} port=port{} dbname={dbname} user={user} password={password}")
