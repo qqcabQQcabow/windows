@@ -5,10 +5,10 @@ import os
 load_dotenv()
 
 host = os.getenv("host")
-port =  os.getenv("port")
-dbname =  os.getenv("dbname")
-user =  os.getenv("user")
-password =  os.getenv("password")
+port = os.getenv("port")
+dbname = os.getenv("dbname")
+user = os.getenv("user")
+password = os.getenv("password")
 
 CONSTRAINT_MESSAGES = {
     # USERS
@@ -42,4 +42,4 @@ CONSTRAINT_MESSAGES = {
 }
 
 # some connect settings
-pool = ConnectionPool("host={host} port=port{} dbname={dbname} user={user} password={password}")
+pool = ConnectionPool(f"host={host} port={port} dbname={dbname} user={user} password={password}")
