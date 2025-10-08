@@ -80,8 +80,7 @@ def start_work_shift(driver_login: str) -> bool:
             con.rollback()
             return False
 
-
-def stop_work_shift(login: str) -> bool:
+def end_work_shift(login: str) -> bool:
 
     '''
     Return true, if succes stop work shift
@@ -124,7 +123,6 @@ def stop_work_shift(login: str) -> bool:
         except Exception:
             con.rollback()
             return False
-
 
 def get(login: str) -> Optional[dict]:
 

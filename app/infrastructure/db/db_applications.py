@@ -26,8 +26,6 @@ def retrieve_all(causer: JWTPayload) -> list[dict[Any, Any]]:
             return []
     return []
 
-
-
 def retrieve_all_new_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
@@ -40,8 +38,6 @@ def retrieve_all_new_for_logist(login: str) -> list[dict[Any, Any]]:
         except Exception:
             return []
     return []
-
-
 
 def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
@@ -67,8 +63,6 @@ def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
             return []
     return []
 
-
-
 def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
@@ -81,8 +75,6 @@ def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
         except Exception:
             return []
     return []
-
-
 
 def create(logist_login: str, data: Application):
     """
@@ -329,8 +321,9 @@ def out_state(state: ApplicationState) -> bool:
 
                         SET time_out = NOW()
 
-                        WHERE application_id = %(application_id)s and
-                              state_name = %(state_name)s;
+                        WHERE application_id = %(application_id)s
+                        and state_name = %(state_name)s
+                        and time_out is NULL
 
                         """,
 

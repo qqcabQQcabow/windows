@@ -57,7 +57,6 @@ def add_logist(data: LogistRegistrInfo, hash_p: str, salt_p: str):
             con.rollback()
             raise e
 
-
 def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
 
     '''
@@ -119,7 +118,6 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
             con.rollback()
             raise e
 
-
 def get(login: str) -> Optional[dict]:
 
     '''
@@ -146,7 +144,6 @@ def get(login: str) -> Optional[dict]:
 
             return None
 
-
 def get_role(login: str) -> Optional[str]:
 
     '''
@@ -166,7 +163,6 @@ def get_role(login: str) -> Optional[str]:
 
             return res[0]
 
-
 def get_password_hash_and_salt(login: str) -> Optional[Tuple[str, str]]:
 
     '''
@@ -185,7 +181,6 @@ def get_password_hash_and_salt(login: str) -> Optional[Tuple[str, str]]:
                 return None
 
             return hash_p_and_s
-
 
 def change_password_hash(login: str, new_hash: str, new_salt: str) -> bool:
 

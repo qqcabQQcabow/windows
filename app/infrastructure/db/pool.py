@@ -32,13 +32,13 @@ CONSTRAINT_MESSAGES = {
     "tracks_pkey": "Автомобиль с таким GRZ уже существует",         # PRIMARY KEY GRZ
 
     # DRIVER_APPLICATIONS
-    "driver_applications_driver_login_fkey": "Водитель для заявки не найден",  # FOREIGN KEY driver_login → DRIVERS
-    "driver_applications_logist_login_fkey": "Логист для заявки не найден",    # FOREIGN KEY logist_login → LOGISTS
-    "driver_applications_pkey": "Заявка с таким id уже существует",           # PRIMARY KEY id
+    "applications_driver_login_fkey": "Водитель для заявки не найден",  # FOREIGN KEY driver_login → DRIVERS
+    "applications_logist_login_fkey": "Логист для заявки не найден",    # FOREIGN KEY logist_login → LOGISTS
+    "applications_pkey": "Заявка с таким id уже существует",           # PRIMARY KEY id
 
     # DRIVER_APPLICATION_STATES
-    "driver_application_states_application_id_fkey": "Заявка для статуса не найдена", # FOREIGN KEY application_id → DRIVER_APPLICATIONS
-    "driver_application_states_pkey": "Статус с таким id уже существует"               # PRIMARY KEY id
+    "application_states_application_id_fkey": "Заявка для статуса не найдена", # FOREIGN KEY application_id → DRIVER_APPLICATIONS
+    "application_states_pkey": "Статус с таким id уже существует"               # PRIMARY KEY id
 }
 
 # some connect settings
