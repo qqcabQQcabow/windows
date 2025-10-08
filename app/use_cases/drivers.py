@@ -1,4 +1,4 @@
-from ..infrastructure.db import db_drivers, db_applications
+from ..infrastructure.db import db_drivers, db_applications, db_users
 from ..infrastructure.data_schemas import JWTPayload, RoleEnum, TrackGrz, TrackForm
 
 
@@ -114,3 +114,12 @@ def del_track(causer: JWTPayload, data: TrackGrz) -> Optional[str]:
 
     except Exception as e:
         return f"Ошбика. {e}"
+
+
+def profile(causer: JWTPayload) -> Tuple[dict[Any, Any], Optional[str]]:
+    try:
+        if not causer in [RoleEnum.DRIVER]:
+            return {}, "Нет прав"
+        return db_users.driver_profile(causer.login), None
+    except Exception as e:
+        return {}, f"Ошибка. {e}"

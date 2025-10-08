@@ -1,7 +1,7 @@
 from ..infrastructure.db import db_applications, db_users, db_drivers
-from ..infrastructure.data_schemas import JWTPayload, SendApplication, ApplicationStateEnum
+from ..infrastructure.data_schemas import JWTPayload, SendApplication, ApplicationStateEnum, RoleEnum
 
-from typing import Optional
+from typing import Optional, Tuple, Any
 
 def send_application_to_driver(causer: JWTPayload, data: SendApplication) -> Optional[str]:
     try:
@@ -33,3 +33,11 @@ def send_application_to_driver(causer: JWTPayload, data: SendApplication) -> Opt
 
     except Exception as e:
         return f"Обнаружена ошибка. {e}"
+
+def profile(causer: JWTPayload) -> Tuple[dict[Any, Any], Optional[str]]:
+    try:
+        if not causer in [RoleEnum.LOGIST]:
+            return {}, "Нет прав"
+        return db_users.logist_profile(causer.login), None
+    except Exception as e:
+        return {}, f"Ошибка. {e}"

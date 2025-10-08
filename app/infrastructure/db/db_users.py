@@ -1,7 +1,7 @@
 from .pool import pool, CONSTRAINT_MESSAGES
 import psycopg
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Any
 from ..data_schemas import DriverRegistrInfo, LogistRegistrInfo, RoleEnum
 
 def add_logist(data: LogistRegistrInfo, hash_p: str, salt_p: str):
@@ -33,9 +33,9 @@ def add_logist(data: LogistRegistrInfo, hash_p: str, salt_p: str):
             with con.cursor() as cur:
                 cur.execute("""
                     insert into users (login, hash_password, hash_salt, phone, email, name, surname,
-                                       patronymic, role, born_date)
+                                       patronymic, role, born_date, avatar)
                     values (%(login)s, %(hash_password)s, %(hash_salt)s, %(phone)s, %(email)s, 
-                            %(name)s, %(surname)s, %(patronymic)s, %(role)s, to_timestamp(%(born_date)s))
+                            %(name)s, %(surname)s, %(patronymic)s, %(role)s, to_timestamp(%(born_date)s), NULL)
                 """, user_data)
 
                 cur.execute("""
@@ -92,9 +92,9 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
             with con.cursor() as cur:
                 cur.execute("""
                     insert into users (login, hash_password, hash_salt, phone, email, name, surname,
-                                       patronymic, role, born_date)
+                                       patronymic, role, born_date, avatar)
                     values (%(login)s, %(hash_password)s, %(hash_salt)s, %(phone)s, %(email)s, 
-                            %(name)s, %(surname)s, %(patronymic)s, %(role)s, to_timestamp(%(born_date)s))
+                            %(name)s, %(surname)s, %(patronymic)s, %(role)s, to_timestamp(%(born_date)s), NULL)
                 """, user_data)
 
                 cur.execute("""
@@ -209,3 +209,88 @@ def change_password_hash(login: str, new_hash: str, new_salt: str) -> bool:
         except Exception:
             con.rollback()
             return False
+
+def driver_profile(login: str) -> dict[Any, Any]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                            
+                cur.execute(
+                        """
+
+                        SELECT
+                            d.user_login,
+                            d.raiting,
+                            d.at_work,
+                            d.passport_numbers,
+                            d.driver_license_numbers,
+                            d.job_license_numbers,
+                            d.snils_number,
+                            u.phone,
+                            u.email,
+                            u.name,
+                            u.surname,
+                            u.patronymic,
+                            u.role,
+                            u.born_date
+                        FROM drivers AS d
+                        JOIN users  AS u ON u.login = d.user_login
+                        where u.login = %(login)s
+                        ORDER BY u.surname, u.name;
+
+                        """,
+                        {"login": login}
+                )
+
+                res = cur.fetchone()
+                if res is None:
+                    return {}
+
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    return dict(zip(colnames, res))
+
+                return {}
+
+        except Exception:
+            return {}
+
+
+def logist_profile(login: str) -> dict[Any, Any]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                            
+                cur.execute(
+                        """
+
+                        SELECT
+                            u.phone,
+                            u.email,
+                            u.name,
+                            u.surname,
+                            u.patronymic,
+                            u.role,
+                            u.born_date
+                        FROM logists AS l
+                        JOIN users  AS u ON u.login = l.user_login
+                        where u.login = %(login)s
+                        ORDER BY u.surname, u.name;
+
+                        """,
+                        {"login": login}
+                )
+
+                res = cur.fetchone()
+                if res is None:
+                    return {}
+
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    return dict(zip(colnames, res))
+
+                return {}
+
+        except Exception:
+            return {}
+

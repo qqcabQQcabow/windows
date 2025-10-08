@@ -12,6 +12,12 @@ DRIVER_TAG = "drivers"
 
 
 
+@router.get("/drivers/profile", tags=[DRIVER_TAG])
+async def retrieve_driver_profile(causer: JWTPayload = Depends(get_jwt_payload)):
+    res, err = drivers.profile(causer)
+    if err is not None:
+        HTTPException(status_code=500, detail=str(err))
+    return {"response": res}
 
 
 

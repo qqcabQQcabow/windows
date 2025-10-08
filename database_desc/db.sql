@@ -29,6 +29,8 @@ DROP TYPE IF EXISTS application_state_enum;
 CREATE TYPE user_role_enum AS ENUM ('LOGIST', 'DRIVER', 'ADMIN');
 
 CREATE TABLE USERS (
+    avatar VARCHAR(256),
+
     login VARCHAR(128) PRIMARY KEY NOT NULL,
     hash_password VARCHAR(2048) NOT NULL,
     hash_salt VARCHAR(2048) NOT NULL,
