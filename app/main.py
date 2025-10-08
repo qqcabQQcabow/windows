@@ -1,10 +1,9 @@
-from fastapi import Depends, FastAPI
+from fastapi import FastAPI
 
-from app.dependencies import get_current_user
-from app.routers import users, drivers, logists, driver_applications
+from app.routers import users, drivers, logists, applications
 
 app = FastAPI()
-app.include_router(driver_applications.router)
+app.include_router(applications.router)
 app.include_router(users.router)
 app.include_router(drivers.router)
 app.include_router(logists.router)

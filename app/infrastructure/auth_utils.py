@@ -1,32 +1,10 @@
 import jwt
-import time
-from enum import Enum
+from .data_schemas import JWTPayload, RoleEnum
 
-from pydantic import BaseModel
 
 SECRET_KEY = "AladinGalendaGubin-AGG-GAG-GGA"
 ALGORITHM = "HS256"
 LIFE_TIME_SEC = 24*3600*30
-
-
-class RoleEnum(str, Enum):
-    DRIVER = "DRIVER"
-    LOGIST = "LOGIST"
-    ADMIN = "ADMIN"
-
-
-class JWTPayload(BaseModel):
-    login: str
-    role: RoleEnum
-    exp: int
-
-    @classmethod
-    def create(cls, login: str, role: RoleEnum, lifetime_sec: int = 3600):
-        return cls(
-            login=login,
-            role=role,
-            exp=int(time.time()) + lifetime_sec
-        )
 
 
 def create_jwt_token(login: str, role: RoleEnum) -> str:

@@ -17,12 +17,12 @@ DROP TABLE IF EXISTS USERS CASCADE;
 DROP TABLE IF EXISTS LOGISTS CASCADE;
 DROP TABLE IF EXISTS DRIVERS CASCADE;
 DROP TABLE IF EXISTS TRACKS CASCADE;
-DROP TABLE IF EXISTS DRIVER_APPLICATIONS CASCADE;
-DROP TABLE IF EXISTS DRIVER_APPLICATION_STATES CASCADE;
+DROP TABLE IF EXISTS APPLICATIONS CASCADE;
+DROP TABLE IF EXISTS APPLICATION_STATES CASCADE;
 
 DROP TYPE IF EXISTS user_role_enum;
 DROP TYPE IF EXISTS container_type_enum;
-DROP TYPE IF EXISTS driver_application_state_enum;
+DROP TYPE IF EXISTS application_state_enum;
 
 
 CREATE TYPE user_role_enum AS ENUM ('LOGIST', 'DRIVER', 'ADMIN');
@@ -101,7 +101,7 @@ CREATE TABLE TRACKS (
 
 CREATE TYPE container_type_enum AS ENUM ('SMALL', 'MEDIUM', 'LARGE');
 
-CREATE TABLE DRIVER_APPLICATIONS (
+CREATE TABLE APPLICATIONS (
     id SERIAL PRIMARY KEY,
     
     -- связи
@@ -150,7 +150,7 @@ CREATE TABLE DRIVER_APPLICATIONS (
     notes VARCHAR(4096)
 );
 
-CREATE TYPE driver_application_state_enum AS ENUM (
+CREATE TYPE application_state_enum AS ENUM (
     'APPLICATION',          -- Этап №1. Заявка
     'TERMINAL',             -- Этап №2. Терминал
     'WAREHOUSE',            -- Этап №3. Склад
@@ -161,9 +161,9 @@ CREATE TYPE driver_application_state_enum AS ENUM (
 );
 
 
-CREATE TABLE DRIVER_APPLICATION_STATES (
+CREATE TABLE APPLICATION_STATES (
     application_id INT NOT NULL,
-    state_name driver_application_state_enum NOT NULL,
+    state_name application_state_enum NOT NULL,
 
     -- driver_login VARCHAR(128),
     -- FOREIGN KEY (driver_login) REFERENCES DRIVERS(user_login),
@@ -174,5 +174,5 @@ CREATE TABLE DRIVER_APPLICATION_STATES (
     time_out TIMESTAMP,
 
     PRIMARY KEY (application_id, state_name),
-    FOREIGN KEY (application_id) REFERENCES DRIVER_APPLICATIONS(id)
+    FOREIGN KEY (application_id) REFERENCES APPLICATIONS(id)
 );

@@ -1,5 +1,4 @@
-from psycopg import cursor
-from .pool import pool, CONSTRAINT_MESSAGES
+from .pool import pool
 
 from typing import Optional, Any
 
@@ -64,7 +63,7 @@ def start_work_shift(driver_login: str) -> bool:
                         values (%(login)s, NOW(), NULL);
 
                         """,
-                    {"login": login}
+                    {"login": driver_login}
                 )
 
 
@@ -82,7 +81,7 @@ def start_work_shift(driver_login: str) -> bool:
             return False
 
 
-def end_driver_work_shift(login: str) -> bool:
+def stop_work_shift(login: str) -> bool:
 
     '''
     Return true, if succes stop work shift
@@ -127,7 +126,7 @@ def end_driver_work_shift(login: str) -> bool:
             return False
 
 
-def get_driver(login: str) -> Optional[dict]:
+def get(login: str) -> Optional[dict]:
 
     '''
     Return None if dont find hash
@@ -151,7 +150,7 @@ def get_driver(login: str) -> Optional[dict]:
 
             return None
 
-def driver_at_work(driver_login: str) -> bool:
+def at_work(driver_login: str) -> bool:
     '''
     Return True, if at_work true
     Return false else
@@ -166,5 +165,4 @@ def driver_at_work(driver_login: str) -> bool:
 
             data = cur.fetchone()
             return data != None
-
 

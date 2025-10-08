@@ -1,36 +1,34 @@
-from ...infrastructure.db.driver_applications import start_await, get_current_state, exist_with_await_driver
-from ...infrastructure.db.drivers import driver_at_work
-from ...infrastructure.db.users import get_user
-from ...infrastructure.auth_utils import JWTPayload
-from ...api_schemas.driver_application_schema import SendDriverApplication, DriverApplicationStateType
+from ..infrastructure.db import db_applications, db_users, db_drivers
+from ..infrastructure.data_schemas import JWTPayload, SendApplication, ApplicationStateEnum
 
 from typing import Optional
 
-def send_application_to_driver(causer: JWTPayload, data: SendDriverApplication) -> Optional[str]:
+def send_application_to_driver(causer: JWTPayload, data: SendApplication) -> Optional[str]:
     try:
         if causer.role != "LOGIST":
             return f"Нет прав"
 
-        da_state = get_current_state(data.application_id)
+        da_state = db_applications.current_state(data.application_id)
         if da_state is None:
             return f"Не удалось получить статус заявки"
 
-        if da_state["state_name"] != DriverApplicationStateType.APPLICATION:
+        if da_state["state_name"] != ApplicationStateEnum.APPLICATION:
             return f"Отправить можно только созданную заявку"
 
-        driver = get_user(data.driver_login)
+        driver = db_users.get(data.driver_login)
         if driver is None:
             return f"Водитель с логином {data.driver_login} не найден"
-        
-        if not driver_at_work(data.driver_login):
+
+        if not db_drivers.at_work(data.driver_login):
             return f"Водитель не на работе"
 
-        if exist_with_await_driver(data.driver_login):
+        if db_applications.exist_with_await_driver(data.driver_login):
             return f"Водитель уже имеет заявку на подтверждение"
 
-        if not start_await(data.application_id, data.driver_login):
+        if not db_applications.start_await(data.application_id, data.driver_login):
             return f"Не удалось отправить заявку водителю"
 
+        # TODO
         # send websocket message to front
 
     except Exception as e:

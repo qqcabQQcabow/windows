@@ -1,11 +1,8 @@
-from psycopg import cursor
 from .pool import pool, CONSTRAINT_MESSAGES
 import psycopg
 
 from typing import Optional, Tuple
-from ...api_schemas.user_driver_regist_schema import DriverRegistrInfo
-from ...api_schemas.user_logist_registr_schema import LogistRegistrInfo
-from ...infrastructure.auth_utils import RoleEnum
+from ..data_schemas import DriverRegistrInfo, LogistRegistrInfo, RoleEnum
 
 def add_logist(data: LogistRegistrInfo, hash_p: str, salt_p: str):
 
@@ -123,7 +120,7 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
             raise e
 
 
-def get_user(login: str) -> Optional[dict]:
+def get(login: str) -> Optional[dict]:
 
     '''
     Return None if dont find hash

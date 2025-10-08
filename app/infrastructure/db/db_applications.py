@@ -1,8 +1,6 @@
 from .pool import pool, CONSTRAINT_MESSAGES
 import psycopg
-from ...api_schemas.driver_application_schema import DriverApplication
-from ...api_schemas.driver_application_schema import DriverApplicationState
-from ...infrastructure.auth_utils import JWTPayload, RoleEnum
+from ..data_schemas import Application, ApplicationState, JWTPayload, RoleEnum
 
 from typing import Optional, Any
 
@@ -10,14 +8,13 @@ def retrieve_all(causer: JWTPayload) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
-                cur.execute("""
+                cur.execute(f"""
                             
-                            SELECT * FROM driver_applications where %s(target_column) = %(login)s
+                            SELECT * FROM applications where {"logist_login" if causer.role == RoleEnum.LOGIST else "driver_login"} = %(login)s
 
                             """,
                             {
                                 "login": causer.login,
-                                "target_column": "logist_login" if causer.role == RoleEnum.LOGIST else "driver_login"
                             }
 
                             )
@@ -35,7 +32,7 @@ def retrieve_all_new_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
-                cur.execute("SELECT * FROM driver_applications where logist_login = %(login)s where accepted_time is NULL", {"login": login})
+                cur.execute("SELECT * FROM applications where logist_login = %(login)s where accepted_time is NULL", {"login": login})
                 if cur.description:
                     colnames = [desc[0] for desc in cur.description]
                     rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
@@ -52,9 +49,14 @@ def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
             with con.cursor() as cur:
                 cur.execute("""
                             
-                            select count(*)=( select count(*) from unnest(enum_range(NULL::driver_application_state_enum)) )
-                            from driver_application_states
-                            where application_id = 1 and time_out is not NULL
+                            select * from applications as ap
+                            where (
+
+                                select count(*)=( select count(*) from unnest(enum_range(NULL::application_state_enum)) )
+                                from application_states
+                                where application_id = ap.id and time_out is not NULL
+
+                                ) = TRUE
                             """,
                             {"login": login})
                 if cur.description:
@@ -71,7 +73,7 @@ def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
-                cur.execute("SELECT * FROM driver_applications where logist_login = %(login)s", {"login": login})
+                cur.execute("SELECT * FROM applications where logist_login = %(login)s", {"login": login})
                 if cur.description:
                     colnames = [desc[0] for desc in cur.description]
                     rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
@@ -82,17 +84,17 @@ def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
 
 
 
-def create(logist_login: str, data: DriverApplication):
+def create(logist_login: str, data: Application):
     """
-    Create driver application and create DA_state APPLICATION.
+    Create driver application and create application_state APPLICATION.
     """
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
-                # INSERT в DRIVER_APPLICATIONS
+                # INSERT в applications
                 cur.execute(
                         """
-                    INSERT INTO DRIVER_APPLICATIONS (
+                    INSERT INTO applications (
                         driver_login, logist_login, created_time, container_submission_time,
                         container_type, container_count, container_loading_address, loading_contact,
                         shipper_name, shipper_address, cargo_name, cargo_package_count, cargo_weight,
@@ -136,9 +138,9 @@ def create(logist_login: str, data: DriverApplication):
                 if result is not None:
                     application_id = result[0]
 
-                # INSERT начального статуса в DRIVER_APPLICATION_STATES
+                # INSERT начального статуса в application_states
                 cur.execute("""
-                    INSERT INTO DRIVER_APPLICATION_STATES (
+                    INSERT INTO application_states (
                         application_id, state_name, time_in,time_out, photos, document_photos
                     ) VALUES (
                         %(application_id)s, 'APPLICATION', NOW(), NULL, NULL, NULL
@@ -174,7 +176,7 @@ def awaiter_info(application_id: int) -> Optional[dict[str, str]]:
                         """
 
                         SELECT awaiting_driver_login, awaiting_until
-                        FROM DRIVER_APPLICATIONS
+                        FROM applications
                         WHERE s.application_id = %(application_id)s ;
 
                         """,
@@ -206,7 +208,7 @@ def start_await(application_id: int, driver_login: str) -> bool:
                 cur.execute(
                         """
 
-                        UPDATE driver_applications
+                        UPDATE applications
 
                         SET awaiting_driver_login = %(driver_login)s,
                             awaiting_until = NOW() + interval '5 minutes'
@@ -248,7 +250,7 @@ def current_state(application_id: int) -> Optional[dict[str, str]]:
                         """
 
                         SELECT s.*
-                        FROM DRIVER_APPLICATION_STATES s
+                        FROM application_states s
                         WHERE s.application_id = %(application_id)s
                         ORDER BY s.time_in DESC
                         LIMIT 1;
@@ -272,7 +274,7 @@ def current_state(application_id: int) -> Optional[dict[str, str]]:
         except Exception:
             return None
 
-def init_state(state: DriverApplicationState) -> bool:
+def init_state(state: ApplicationState) -> bool:
 
     """
     Return True if succes.
@@ -285,7 +287,7 @@ def init_state(state: DriverApplicationState) -> bool:
                 cur.execute(
                         """
 
-                        insert into DRIVER_APPLICATION_STATES(application_id, state_name, time_in)
+                        insert into application_states(application_id, state_name, time_in)
                         values(%(application_id)s, %(state_name)s, NOW() )
 
                         """,
@@ -310,7 +312,7 @@ def init_state(state: DriverApplicationState) -> bool:
             con.rollback()
             raise e
 
-def out_state(state: DriverApplicationState) -> bool:
+def out_state(state: ApplicationState) -> bool:
 
     """
     Return True if succes.
@@ -323,7 +325,7 @@ def out_state(state: DriverApplicationState) -> bool:
                 cur.execute(
                         """
 
-                        UPDATE driver_application_states
+                        UPDATE application_states
 
                         SET time_out = NOW()
 
@@ -360,7 +362,7 @@ def exist_with_await_driver(driver_login: str) -> bool:
 
     with pool.connection() as con:
         with con.cursor() as cur:
-            cur.execute("select 1 from driver_applications where awaiting_driver_login = %(login)s and awaiting_until > NOW() LIMIT 1",
+            cur.execute("select 1 from applications where awaiting_driver_login = %(login)s and awaiting_until > NOW() LIMIT 1",
                         {"login": driver_login},
                         )
     
@@ -376,7 +378,7 @@ def reject_by_driver(driver_login: str) -> bool:
                 cur.execute(
                         """
 
-                        UPDATE driver_applications
+                        UPDATE applications
 
                         SET awaiting_driver_login = NULL, awaiting_until = NULL
 
@@ -411,7 +413,7 @@ def accept_by_driver(driver_login: str) -> bool:
                 cur.execute(
                         """
 
-                        UPDATE driver_applications
+                        UPDATE applications
 
                         SET driver_login = %(login)s, accepted_time = NOW(), awaiting_driver_login = NULL, awaiting_until = NULL
 
@@ -446,7 +448,7 @@ def can_accept(driver_login: str) -> bool:
                 cur.execute(
                         """
 
-                        select 1 from DRIVER_APPLICATIONS 
+                        select 1 from applications 
 
                         WHERE awaiting_driver_login = %(login)s
                         and awaiting_until > NOW()
@@ -479,7 +481,7 @@ def can_reject(driver_login: str) -> bool:
                 cur.execute(
                         """
 
-                        select 1 from DRIVER_APPLICATIONS 
+                        select 1 from applications 
 
                         WHERE awaiting_driver_login = %(login)s
                         and awaiting_until > NOW()
@@ -516,7 +518,7 @@ def change_driver(application_id: int, new_driver_login: str) -> bool:
                 cur.execute(
                         """
 
-                        UPDATE driver_applications
+                        UPDATE applications
 
                         SET driver_login = %(new_driver_login)s,
                             awaiting_until = NULL,
@@ -557,7 +559,7 @@ def retrieve_all_states(application_id: int) -> list[dict[Any, Any]]:
                                 das.document_photos,
                                 das.time_in,
                                 das.time_out
-                            FROM driver_application_states as das
+                            FROM application_states as das
                             WHERE das.application_id = %(application_id)s
                         """,
                         {"application_id": application_id}
@@ -578,7 +580,7 @@ def contains_driver(application_id: int, driver_login: str) -> bool:
                 cur.execute(
                         """
 
-                        select 1 from DRIVER_APPLICATIONS 
+                        select 1 from applications 
 
                         WHERE driver_login = %(login)s
                         and id = %(application_id)s
@@ -611,7 +613,7 @@ def contains_logist(application_id: int, logist_login: str) -> bool:
                 cur.execute(
                         """
 
-                        select 1 from DRIVER_APPLICATIONS 
+                        select 1 from applications 
 
                         WHERE logist_login = %(login)s
                         and id = %(application_id)s
