@@ -1,6 +1,46 @@
-from .pool import pool
+from .pool import pool, CONSTRAINT_MESSAGES
+import psycopg
 
 from typing import Optional, Any
+from ..data_schemas import TrackForm
+
+def retrieve_work_shifts_history(driver_login: str) -> list[dict[Any, Any]]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                cur.execute(
+                        """
+
+                        SELECT
+                            ws.driver_login,
+                            ws.start_time,
+                            ws.end_time,
+                            t.grz,
+                            t.brand,
+                            t.color,
+                            t.model
+                        FROM
+                            DRIVER_WORK_SHIFTS ws
+                        JOIN
+                            TRACKS t
+                            ON ws.track_grz = t.grz
+                        WHERE
+                            ws.driver_login = %(login)s
+                        ORDER BY
+                            ws.start_time;
+
+                        """,
+                        {"login": driver_login}
+                )
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
+                    return rows
+        except Exception:
+            return []
+    return []
+
+
 
 def retrieve_all() -> list[dict[Any, Any]]:
     with pool.connection() as con:
@@ -38,7 +78,7 @@ def retrieve_all() -> list[dict[Any, Any]]:
             return []
     return []
 
-def start_work_shift(driver_login: str) -> bool:
+def start_work_shift(driver_login: str, track_grz: str) -> bool:
 
     '''
     Return true, if succes start work shift
@@ -50,26 +90,20 @@ def start_work_shift(driver_login: str) -> bool:
             with con.cursor() as cur:
 
                 cur.execute(
-                    "UPDATE DRIVERS SET at_work = TRUE WHERE user_login = %(login)s",
-                    {"login": driver_login},
-                )
-
-                updated = cur.rowcount
-
-                cur.execute(
                         """
 
-                        insert into DRIVER_WORK_SHIFTS (driver_login, start_time, end_time)
-                        values (%(login)s, NOW(), NULL);
+                        insert into DRIVER_WORK_SHIFTS (driver_login, track_grz, start_time, end_time)
+                        values (%(login)s, %(track_grz)s, NOW(), NULL);
 
                         """,
-                    {"login": driver_login}
+                    {
+                        "login": driver_login,
+                        "track_grz": track_grz,
+                    }
                 )
 
 
-                inserted = cur.rowcount
-
-                success = updated > 0 and inserted > 0
+                success = cur.rowcount > 0
                 if success:
                     con.commit()
                     return True
@@ -80,7 +114,7 @@ def start_work_shift(driver_login: str) -> bool:
             con.rollback()
             return False
 
-def end_work_shift(login: str) -> bool:
+def stop_work_shift(login: str) -> bool:
 
     '''
     Return true, if succes stop work shift
@@ -90,13 +124,6 @@ def end_work_shift(login: str) -> bool:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
-
-                cur.execute(
-                    "UPDATE DRIVERS SET at_work = FALSE WHERE login = %(login)s",
-                    {"login": login},
-                )
-
-                updated = cur.rowcount
 
                 cur.execute(
                         """
@@ -110,10 +137,7 @@ def end_work_shift(login: str) -> bool:
                     {"login": login}
                 )
 
-
-                updated_2 = cur.rowcount
-
-                success = updated > 0 and updated_2 > 0
+                success = cur.rowcount > 0
                 if success:
                     con.commit()
                     return True
@@ -148,15 +172,16 @@ def get(login: str) -> Optional[dict]:
 
             return None
 
+
 def at_work(driver_login: str) -> bool:
     '''
-    Return True, if at_work true
+    Return True, if exist work shift without end_time
     Return false else
     '''
 
     with pool.connection() as con:
         with con.cursor() as cur:
-            cur.execute("select 1 from drivers where user_login = %(login)s and at_work = TRUE LIMIT 1",
+            cur.execute("select 1 from driver_work_shifts where driver_login = %(login)s and end_time is NULL LIMIT 1",
                         {"login": driver_login},
                         )
     
@@ -164,3 +189,93 @@ def at_work(driver_login: str) -> bool:
             data = cur.fetchone()
             return data != None
 
+
+def track_exist(driver_login: str, track_grz: str) -> bool:
+    '''
+    Return True, if exist work shift without end_time
+    Return false else
+    '''
+
+    with pool.connection() as con:
+        with con.cursor() as cur:
+            cur.execute("""
+
+                        SELECT 1 from tracks
+                        WHERE driver_login = %(login)s and GRZ = %(track_grz)s
+                        LIMIT 1
+
+                        """,
+                        {
+                            "login": driver_login,
+                            "track_grz": track_grz
+                        },
+                        )
+    
+
+            data = cur.fetchone()
+            return data != None
+
+
+
+def add_track(driver_login: str, track: TrackForm):
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                    """
+
+                        INSERT INTO tracks (driver_login, GRZ, brand, color, model)
+                        VALUES (%(driver_login)s, %(grz)s, %(brand)s, %(color)s, %(model)s)
+
+                    """,
+
+                    {
+                    "driver_login": driver_login,
+                    "grz": track.grz,
+                    "brand": track.brand,
+                    "color": track.color,
+                    "model": track.model
+                })
+
+                con.commit()
+
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+
+        except Exception as e:
+            con.rollback()
+            raise e
+
+def del_track(driver_login: str, track_grz: str):
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                    """
+                        delete from tracks where driver_login=%(driver_login)s and GRZ = %(grz)s
+
+                    """,
+
+                    {
+                    "driver_login": driver_login,
+                    "grz": track_grz,
+                })
+
+                con.commit()
+
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+            raise
+
+        except Exception as e:
+            con.rollback()
+            raise e

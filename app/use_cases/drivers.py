@@ -1,5 +1,5 @@
 from ..infrastructure.db import db_drivers, db_applications
-from ..infrastructure.data_schemas import JWTPayload, RoleEnum
+from ..infrastructure.data_schemas import JWTPayload, RoleEnum, TrackGrz, TrackForm
 
 
 from typing import Tuple, Any, Optional
@@ -52,13 +52,15 @@ def reject_application(causer: JWTPayload) -> Optional[str]:
 
 
 
-def start_work_shift(causer: JWTPayload) -> Optional[str]:
+def start_work_shift(causer: JWTPayload, data: TrackGrz) -> Optional[str]:
     try:
-
         if not causer.login in [RoleEnum.DRIVER]:
             return f"Нет прав"
 
-        success_operation = db_drivers.start_work_shift(causer.login)
+        if not db_drivers.track_exist(causer.login, data.grz):
+            return f"Не существует авто для начала смены "
+
+        success_operation = db_drivers.start_work_shift(causer.login, data.grz)
         if not success_operation:
             return "Не удалось начать смену"
 
@@ -71,13 +73,42 @@ def start_work_shift(causer: JWTPayload) -> Optional[str]:
 
 def stop_work_shift(causer: JWTPayload) -> Optional[str]:
     try:
-
         if not causer.login in [RoleEnum.DRIVER]:
             return f"Нет прав"
 
         success_operation = db_drivers.stop_work_shift(causer.login)
         if not success_operation:
             return "Не удалось закончить смену"
+
+        return None
+
+    except Exception as e:
+        return f"Ошбика. {e}"
+
+def add_track(causer: JWTPayload, data: TrackForm) -> Optional[str]:
+    try:
+        if not causer.login in [RoleEnum.DRIVER]:
+            return f"Нет прав"
+
+        if db_drivers.track_exist(causer.login, data.grz):
+            return "Такое авто уже существует"
+
+        db_drivers.add_track(causer.login, data)
+
+        return None
+
+    except Exception as e:
+        return f"Ошбика. {e}"
+
+def del_track(causer: JWTPayload, data: TrackGrz) -> Optional[str]:
+    try:
+        if not causer.login in [RoleEnum.DRIVER]:
+            return f"Нет прав"
+
+        if not db_drivers.track_exist(causer.login, data.grz):
+            return "Такого авто не существует"
+
+        db_drivers.del_track(causer.login, data.grz)
 
         return None
 

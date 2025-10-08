@@ -83,7 +83,6 @@ def create(logist_login: str, data: Application):
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
-                # INSERT в applications
                 cur.execute(
                         """
                     INSERT INTO applications (
@@ -124,13 +123,11 @@ def create(logist_login: str, data: Application):
                     "notes": data.notes
                 })
 
-                # Получаем ID вставленной заявки
                 result = cur.fetchone()
                 application_id = 0
                 if result is not None:
                     application_id = result[0]
 
-                # INSERT начального статуса в application_states
                 cur.execute("""
                     INSERT INTO application_states (
                         application_id, state_name, time_in,time_out, photos, document_photos
@@ -139,7 +136,6 @@ def create(logist_login: str, data: Application):
                     )
                 """, {"application_id": application_id})
 
-                # Коммит транзакции
                 con.commit()
 
         except psycopg.Error as e:

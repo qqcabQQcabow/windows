@@ -121,3 +121,25 @@ class JWTPayload(BaseModel):
             role=role,
             exp=int(time.time()) + lifetime_sec
         )
+
+
+#-----------------------------------------------------------------------------------
+
+class SendMessageForm(BaseModel):
+    recepient_login: str
+    message: str
+
+class ReceiptLogin(BaseModel):
+    recepient_login: str
+
+#========================================================================================
+
+class TrackForm(BaseModel):
+    grz: str
+    brand: str
+    color: str
+    model: str
+
+
+class TrackGrz(BaseModel):
+    grz: str

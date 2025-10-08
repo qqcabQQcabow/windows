@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.dependencies import get_jwt_payload
 from ..infrastructure.data_schemas import JWTPayload
 
@@ -24,28 +24,28 @@ DA_TAG = "driver_applications"
 async def create_application(data: Application, causer: JWTPayload = Depends(get_jwt_payload)):
     err = applications.create(causer, data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
 
     return {"response": "success"}
 
 
 
 
-@router.post("/applications/initState", tags=[DA_TAG])
+@router.put("/applications/initState", tags=[DA_TAG])
 async def init_application_state(data: ApplicationState, causer: JWTPayload = Depends(get_jwt_payload)):
     err = applications.init_state(causer, data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}
 
 
 
 
-@router.post("/applications/outState", tags=[DA_TAG])
+@router.put("/applications/outState", tags=[DA_TAG])
 async def out_application_state(data: ApplicationState, causer: JWTPayload = Depends(get_jwt_payload)):
     err = applications.out_state(causer, data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}
 
 
@@ -77,19 +77,19 @@ async def retrieve_all(causer: JWTPayload = Depends(get_jwt_payload)):
 
 
 
-@router.post("/applications/allStates", tags=[DA_TAG])
-async def retrieve_all_states(data: ApplicationId, causer: JWTPayload = Depends(get_jwt_payload)):
-    res, err = applications.retrieve_all_states(causer, data.application_id)
+@router.get("/applications/allStates/{id}", tags=[DA_TAG])
+async def retrieve_all_states(id: int, causer: JWTPayload = Depends(get_jwt_payload)):
+    res, err = applications.retrieve_all_states(causer, id)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"response": res}
 
 
 
 
-@router.post("/applications/changeDriver", tags=[DA_TAG])
+@router.put("/applications/changeDriver", tags=[DA_TAG])
 async def change_application_driver(data: ChangeApplicationDriver, causer: JWTPayload = Depends(get_jwt_payload)):
     err = applications.change_driver(causer, data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}

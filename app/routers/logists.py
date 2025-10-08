@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from app.dependencies import get_jwt_payload
 from ..infrastructure.data_schemas import JWTPayload
 
@@ -15,5 +15,5 @@ LOGIST_TAG = "logists"
 async def send_application_to_driver(data: SendApplication, causer: JWTPayload = Depends(get_jwt_payload)):
     err = logists.send_application_to_driver(causer, data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}

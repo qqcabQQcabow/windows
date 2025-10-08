@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
 from ..use_cases import users
 from ..infrastructure.data_schemas import LoginInfo, DriverRegistrInfo, LogistRegistrInfo
@@ -11,7 +11,7 @@ USER_TAG = "users"
 async def login_to_system(data: LoginInfo):
     token, err = users.log_in(data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"token": token}
 
 
@@ -21,7 +21,7 @@ async def login_to_system(data: LoginInfo):
 async def registr_driver(data: DriverRegistrInfo):
     err = users.registr_driver(data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}
 
 
@@ -31,5 +31,5 @@ async def registr_driver(data: DriverRegistrInfo):
 async def registr_logist(data: LogistRegistrInfo):
     err = users.registr_logits(data)
     if err is not None:
-        return {"error": err}
+        HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}
