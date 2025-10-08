@@ -3,7 +3,7 @@ from .pool import pool, CONSTRAINT_MESSAGES
 
 from typing import Optional, Any
 
-def retrieve_all_drivers() -> list[dict[Any, Any]]:
+def retrieve_all() -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
@@ -39,7 +39,7 @@ def retrieve_all_drivers() -> list[dict[Any, Any]]:
             return []
     return []
 
-def start_driver_work_shift(login: str) -> bool:
+def start_work_shift(driver_login: str) -> bool:
 
     '''
     Return true, if succes start work shift
@@ -52,7 +52,7 @@ def start_driver_work_shift(login: str) -> bool:
 
                 cur.execute(
                     "UPDATE DRIVERS SET at_work = TRUE WHERE user_login = %(login)s",
-                    {"login": login},
+                    {"login": driver_login},
                 )
 
                 updated = cur.rowcount

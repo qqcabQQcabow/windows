@@ -7,7 +7,7 @@ from typing import Optional
 
 
 
-def init_state_use_case(causer: JWTPayload, new_state: DriverApplicationState) -> Optional[str]:
+def init(causer: JWTPayload, new_state: DriverApplicationState) -> Optional[str]:
     try:
 
         if causer.role != RoleEnum.DRIVER:
@@ -23,7 +23,7 @@ def init_state_use_case(causer: JWTPayload, new_state: DriverApplicationState) -
 
 
 
-def out_state_use_case(causer: JWTPayload, new_state: DriverApplicationState) -> Optional[str]:
+def out(causer: JWTPayload, new_state: DriverApplicationState) -> Optional[str]:
     try:
 
         if causer.role != RoleEnum.DRIVER:

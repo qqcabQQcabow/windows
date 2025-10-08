@@ -2,14 +2,25 @@ from .pool import pool, CONSTRAINT_MESSAGES
 import psycopg
 from ...api_schemas.driver_application_schema import DriverApplication
 from ...api_schemas.driver_application_schema import DriverApplicationState
+from ...infrastructure.auth_utils import JWTPayload, RoleEnum
 
 from typing import Optional, Any
 
-def retrieve_all_for_driver(login: str) -> list[dict[Any, Any]]:
+def retrieve_all(causer: JWTPayload) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
-                cur.execute("SELECT * FROM driver_applications where driver_login = %(login)s", {"login": login})
+                cur.execute("""
+                            
+                            SELECT * FROM driver_applications where %s(target_column) = %(login)s
+
+                            """,
+                            {
+                                "login": causer.login,
+                                "target_column": "logist_login" if causer.role == RoleEnum.LOGIST else "driver_login"
+                            }
+
+                            )
                 if cur.description:
                     colnames = [desc[0] for desc in cur.description]
                     rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
@@ -17,6 +28,44 @@ def retrieve_all_for_driver(login: str) -> list[dict[Any, Any]]:
         except Exception:
             return []
     return []
+
+
+
+def retrieve_all_new_for_logist(login: str) -> list[dict[Any, Any]]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                cur.execute("SELECT * FROM driver_applications where logist_login = %(login)s where accepted_time is NULL", {"login": login})
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
+                    return rows
+        except Exception:
+            return []
+    return []
+
+
+
+def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                cur.execute("""
+                            
+                            select count(*)=( select count(*) from unnest(enum_range(NULL::driver_application_state_enum)) )
+                            from driver_application_states
+                            where application_id = 1 and time_out is not NULL
+                            """,
+                            {"login": login})
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
+                    return rows
+        except Exception:
+            return []
+    return []
+
+
 
 def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
@@ -31,7 +80,9 @@ def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
             return []
     return []
 
-def create_driver_application(logist_login: str, data: DriverApplication):
+
+
+def create(logist_login: str, data: DriverApplication):
     """
     Create driver application and create DA_state APPLICATION.
     """
@@ -109,7 +160,7 @@ def create_driver_application(logist_login: str, data: DriverApplication):
             con.rollback()
             raise e
 
-def get_wait_info(application_id: int) -> Optional[dict[str, str]]:
+def awaiter_info(application_id: int) -> Optional[dict[str, str]]:
     '''
     Return current info about wait driver
     If cant found state return None
@@ -183,7 +234,7 @@ def start_await(application_id: int, driver_login: str) -> bool:
             con.rollback()
             raise e
 
-def get_current_state(application_id: int) -> Optional[dict[str, str]]:
+def current_state(application_id: int) -> Optional[dict[str, str]]:
     '''
     Return current state
     If cant found state return None
@@ -221,7 +272,7 @@ def get_current_state(application_id: int) -> Optional[dict[str, str]]:
         except Exception:
             return None
 
-def init_driver_state(state: DriverApplicationState) -> bool:
+def init_state(state: DriverApplicationState) -> bool:
 
     """
     Return True if succes.
@@ -259,7 +310,7 @@ def init_driver_state(state: DriverApplicationState) -> bool:
             con.rollback()
             raise e
 
-def out_driver_state(state: DriverApplicationState) -> bool:
+def out_state(state: DriverApplicationState) -> bool:
 
     """
     Return True if succes.

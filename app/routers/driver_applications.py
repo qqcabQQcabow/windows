@@ -1,9 +1,11 @@
 from fastapi import APIRouter, Depends
-from app.api_schemas.driver_application_schema import DriverApplication, DriverApplicationState, ChangeApplicationDriver
+from app.api_schemas.driver_application_schema import DriverApplication, DriverApplicationState, ChangeApplicationDriver, ApplicationId
 from app.dependencies import get_current_user, JWTPayload
 from ..infrastructure.auth_utils import RoleEnum
 
-from ..use_cases.driver_applications import get_all, create, change_state, change_driver, get_all_states
+from ..infrastructure.db import driver_applications
+
+from ..use_cases.driver_applications import create, change_state, change_driver, get_all_states
 router = APIRouter()
 
 DA_TAG = "driver_applications"
@@ -18,12 +20,14 @@ async def create_driver_app(drive_app: DriverApplication, causer: JWTPayload = D
 
 
 
+
 @router.post("/driverApplications/initState", tags=[DA_TAG])
 async def init_da_state(drive_app: DriverApplicationState, causer: JWTPayload = Depends(get_current_user)):
     err = change_state.init_state_use_case(causer, drive_app)
     if err is not None:
         return {"error": err}
     return {"response": "success"}
+
 
 
 
@@ -36,21 +40,41 @@ async def out_da_state(drive_app: DriverApplicationState, causer: JWTPayload = D
 
 
 
+
+@router.get("/driverApplications/allNew", tags=[DA_TAG])
+async def retrieve_all_new(causer: JWTPayload = Depends(get_current_user)):
+    if causer.role == RoleEnum.LOGIST:
+        return {"response": driver_applications.retrieve_all_new_for_logist(causer.login)}
+
+    return {"error": "Нет прав"}
+
+
+
+
+@router.get("/driverApplications/allCompleted", tags=[DA_TAG])
+async def retrieve_all_completed(causer: JWTPayload = Depends(get_current_user)):
+    if causer.role == RoleEnum.LOGIST:
+        return {"response": driver_applications.retrieve_all_completed_for_logist(causer.login)}
+
+    return {"error": "Нет прав"}
+
+
+
+
 @router.get("/driverApplications/all", tags=[DA_TAG])
 async def retrieve_all(causer: JWTPayload = Depends(get_current_user)):
-    if causer.role == RoleEnum.LOGIST:
-        return {"response": get_all.get_all_driver_applications_for_logist(causer.login)}
-    if causer.role == RoleEnum.DRIVER:
-        return {"response": get_all.get_all_driver_applications_for_driver(causer.login)}
+    return {"response": driver_applications.retrieve_all(causer)}
 
-    return {"error": "undefined role"}
 
-@router.get("/driverApplications/allStates/{id}", tags=[DA_TAG])
-async def retrieve_all_states(id: int, causer: JWTPayload = Depends(get_current_user)):
-    res, err = get_all_states.retrieve_all_da_states(causer, id)
+
+@router.post("/driverApplications/allStates", tags=[DA_TAG])
+async def retrieve_all_states(data: ApplicationId, causer: JWTPayload = Depends(get_current_user)):
+    res, err = get_all_states.retrieve_all_da_states(causer, data.application_id)
     if err is not None:
         return {"error": err}
     return {"response": res}
+
+
 
 
 @router.post("/driverApplications/changeDriver", tags=[DA_TAG])

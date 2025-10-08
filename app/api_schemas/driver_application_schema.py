@@ -51,3 +51,5 @@ class ChangeApplicationDriver(BaseModel):
     application_id: int
     new_driver_login: str
 
+class ApplicationId(BaseModel):
+    application_id: int

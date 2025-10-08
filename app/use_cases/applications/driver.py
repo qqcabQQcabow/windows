@@ -3,7 +3,7 @@ from ...infrastructure.auth_utils import RoleEnum, JWTPayload
 from ...api_schemas.driver_application_schema import ChangeApplicationDriver
 from typing import Optional
 
-def change_driver_application_driver(causer: JWTPayload, data: ChangeApplicationDriver) -> Optional[str]:
+def change(causer: JWTPayload, data: ChangeApplicationDriver) -> Optional[str]:
     try:
         if causer.role != RoleEnum.LOGIST:
             return f"Только логист может изменить статус заявки"
