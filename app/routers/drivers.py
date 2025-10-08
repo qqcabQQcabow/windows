@@ -12,6 +12,20 @@ DRIVER_TAG = "drivers"
 
 
 
+
+
+
+@router.get("/drivers/all", tags=[DRIVER_TAG])
+async def retrieve_all_drivers(causer: JWTPayload = Depends(get_jwt_payload)):
+    res, err = drivers.retrieve_all(causer)
+    if err is not None:
+        HTTPException(status_code=500, detail=str(err))
+    return {"response": res}
+
+
+
+
+
 @router.post("/drivers/startWorkShift", tags=[DRIVER_TAG])
 async def start_work_shift(data: TrackGrz, causer: JWTPayload = Depends(get_jwt_payload)):
     err = drivers.start_work_shift(causer, data)
@@ -59,17 +73,6 @@ async def reject_application(causer: JWTPayload = Depends(get_jwt_payload)):
         HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}
 
-
-
-
-
-
-@router.get("/drivers/all", tags=[DRIVER_TAG])
-async def retrieve_all_drivers(causer: JWTPayload = Depends(get_jwt_payload)):
-    res, err = drivers.retrieve_all(causer)
-    if err is not None:
-        HTTPException(status_code=500, detail=str(err))
-    return {"response": res}
 
 
 

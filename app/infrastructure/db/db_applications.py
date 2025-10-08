@@ -39,6 +39,30 @@ def retrieve_all_new_for_logist(login: str) -> list[dict[Any, Any]]:
             return []
     return []
 
+def retrieve_all_in_process_for_logist(login: str) -> list[dict[Any, Any]]:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                cur.execute("""
+                            
+                            select * from applications as ap
+                            where (
+
+                                select count(*)<( select count(*) from unnest(enum_range(NULL::application_state_enum)) )
+                                from application_states
+                                where application_id = ap.id and time_out is not NULL
+
+                                ) = TRUE
+                            """,
+                            {"login": login})
+                if cur.description:
+                    colnames = [desc[0] for desc in cur.description]
+                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
+                    return rows
+        except Exception:
+            return []
+    return []
+
 def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
@@ -76,7 +100,7 @@ def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
             return []
     return []
 
-def create(logist_login: str, data: Application):
+def create(logist_login: str, data: Application) -> bool:
     """
     Create driver application and create application_state APPLICATION.
     """
@@ -124,19 +148,83 @@ def create(logist_login: str, data: Application):
                 })
 
                 result = cur.fetchone()
+                if result is None:
+                    con.rollback()
+                    return False
+
+
                 application_id = 0
-                if result is not None:
-                    application_id = result[0]
+                application_id = result[0]
 
                 cur.execute("""
                     INSERT INTO application_states (
                         application_id, state_name, time_in,time_out, photos, document_photos
                     ) VALUES (
                         %(application_id)s, 'APPLICATION', NOW(), NULL, NULL, NULL
-                    )
+                    ) RETURN application_id
                 """, {"application_id": application_id})
 
+
+
+                result = cur.fetchone()
+                if result is None:
+                    con.rollback()
+                    return False
+
                 con.commit()
+
+                return True
+
+        except psycopg.Error as e:
+            con.rollback()
+            constraint_name = getattr(e.diag, "constraint_name", None)
+            if constraint_name and constraint_name in CONSTRAINT_MESSAGES:
+                raise Exception(CONSTRAINT_MESSAGES[constraint_name])
+
+            raise
+
+        except Exception as e:
+            con.rollback()
+            raise e
+
+def delete(logist_login: str, id: int) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+                cur.execute(
+                        """
+
+                        delete from applications where logist_login = %(logist_login)s and application_id = %(id)s
+
+                        """,
+
+                    {
+                        "logist_login": logist_login,
+                        "id": id
+                    }
+                )
+
+                deleted_applications = cur.rowcount
+
+
+                cur.execute(
+                        """
+
+                        delete from application_states where application_id = %(id)s
+
+                        """,
+                        {"id": id}
+                )
+
+                deleted_states = cur.rowcount
+
+                if not(deleted_states > 0 and deleted_applications > 0):
+                    con.rollback()
+                    return False
+
+                con.commit()
+
+                return True
 
         except psycopg.Error as e:
             con.rollback()

@@ -30,6 +30,16 @@ async def create_application(data: Application, causer: JWTPayload = Depends(get
 
 
 
+@router.delete("/applications/delete/{id}", tags=[DA_TAG])
+async def delete_application(id: int, causer: JWTPayload = Depends(get_jwt_payload)):
+    err = applications.delete(causer, id)
+    if err is not None:
+        HTTPException(status_code=500, detail=str(err))
+
+    return {"response": "success"}
+
+
+
 
 @router.put("/applications/initState", tags=[DA_TAG])
 async def init_application_state(data: ApplicationState, causer: JWTPayload = Depends(get_jwt_payload)):
@@ -49,6 +59,9 @@ async def out_application_state(data: ApplicationState, causer: JWTPayload = Dep
     return {"response": "success"}
 
 
+@router.get("/applications/all", tags=[DA_TAG])
+async def retrieve_all(causer: JWTPayload = Depends(get_jwt_payload)):
+    return {"response": db_applications.retrieve_all(causer)}
 
 
 @router.get("/applications/allNew", tags=[DA_TAG])
@@ -56,8 +69,16 @@ async def retrieve_all_new(causer: JWTPayload = Depends(get_jwt_payload)):
     if causer.role == RoleEnum.LOGIST:
         return {"response": db_applications.retrieve_all_new_for_logist(causer.login)}
 
-    return {"error": "Нет прав"}
+    HTTPException(status_code=500, detail=str("Нет прав"))
 
+
+
+@router.get("/applications/allInProcess", tags=[DA_TAG])
+async def retrieve_all_in_process(causer: JWTPayload = Depends(get_jwt_payload)):
+    if causer.role == RoleEnum.LOGIST:
+        return {"response": db_applications.retrieve_all_in_process_for_logist(causer.login)}
+
+    HTTPException(status_code=500, detail=str("Нет прав"))
 
 
 
@@ -66,14 +87,9 @@ async def retrieve_all_completed(causer: JWTPayload = Depends(get_jwt_payload)):
     if causer.role == RoleEnum.LOGIST:
         return {"response": db_applications.retrieve_all_completed_for_logist(causer.login)}
 
-    return {"error": "Нет прав"}
+    HTTPException(status_code=500, detail=str("Нет прав"))
 
 
-
-
-@router.get("/applications/all", tags=[DA_TAG])
-async def retrieve_all(causer: JWTPayload = Depends(get_jwt_payload)):
-    return {"response": db_applications.retrieve_all(causer)}
 
 
 

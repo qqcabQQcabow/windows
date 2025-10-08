@@ -217,7 +217,7 @@ def track_exist(driver_login: str, track_grz: str) -> bool:
 
 
 
-def add_track(driver_login: str, track: TrackForm):
+def add_track(driver_login: str, track: TrackForm) -> bool:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
@@ -227,6 +227,7 @@ def add_track(driver_login: str, track: TrackForm):
 
                         INSERT INTO tracks (driver_login, GRZ, brand, color, model)
                         VALUES (%(driver_login)s, %(grz)s, %(brand)s, %(color)s, %(model)s)
+                        RETURNING GRZ
 
                     """,
 
@@ -237,8 +238,15 @@ def add_track(driver_login: str, track: TrackForm):
                     "color": track.color,
                     "model": track.model
                 })
+                inserted_grz = cur.fetchone()
+                if inserted_grz is None:
+                    con.rollback()
+                    return False
+
 
                 con.commit()
+
+                return True
 
         except psycopg.Error as e:
             con.rollback()
@@ -251,7 +259,7 @@ def add_track(driver_login: str, track: TrackForm):
             con.rollback()
             raise e
 
-def del_track(driver_login: str, track_grz: str):
+def del_track(driver_login: str, track_grz: str) -> bool:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
@@ -267,7 +275,14 @@ def del_track(driver_login: str, track_grz: str):
                     "grz": track_grz,
                 })
 
+                if not(cur.rowcount > 0):
+                    con.rollback()
+                    return False
+
+
                 con.commit()
+
+                return True
 
         except psycopg.Error as e:
             con.rollback()

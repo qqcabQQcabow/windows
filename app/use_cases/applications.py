@@ -18,7 +18,27 @@ def create(causer: JWTPayload, data: Application) -> Optional[str]:
         if causer.role != "LOGIST":
             return "Нет прав"
 
-        db_applications.create(causer.login, data)
+        success = db_applications.create(causer.login, data)
+        if not success:
+            return "Не удалось создать заявку"
+
+        return None
+
+    except Exception as e:
+        return f"Ошибка. {e}"
+
+def delete(causer: JWTPayload, id: int) -> Optional[str]:
+    '''
+    Return None if success
+    Return Err reason, if bad
+    '''
+    try:
+        if causer.role != "LOGIST":
+            return "Нет прав"
+
+        success = db_applications.delete(causer.login, id)
+        if not success:
+            return "Не удалось удалить заявку"
 
         return None
 
