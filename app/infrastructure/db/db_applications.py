@@ -1,3 +1,4 @@
+from pydantic import NonNegativeFloat
 from .pool import pool, CONSTRAINT_MESSAGES
 import psycopg
 from ..data_schemas import Application, ApplicationState, JWTPayload, RoleEnum
@@ -48,12 +49,12 @@ def retrieve_all_new_for_logist(login: str) -> list[dict[Any, Any]]:
     return []
 
 
-def retrieve_all_in_process_for_logist(login: str) -> list[dict[Any, Any]]:
+def retrieve_all_in_process(causer: JWTPayload) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
                 cur.execute(
-                    """
+                    f"""
                             
                             select * from applications as ap
                             where (
@@ -64,8 +65,10 @@ def retrieve_all_in_process_for_logist(login: str) -> list[dict[Any, Any]]:
 
                                 ) = TRUE
                             and accepted_time is not NULL
+                            and {"logist_login" if causer.role == RoleEnum.LOGIST else "driver_login"} = %(login)s
+
                             """,
-                    {"login": login},
+                    {"login": causer.login},
                 )
                 if cur.description:
                     colnames = [desc[0] for desc in cur.description]
@@ -76,12 +79,12 @@ def retrieve_all_in_process_for_logist(login: str) -> list[dict[Any, Any]]:
     return []
 
 
-def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
+def retrieve_all_completed(causer: JWTPayload) -> list[dict[Any, Any]]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
                 cur.execute(
-                    """
+                    f"""
                             
                             select * from applications as ap
                             where (
@@ -91,8 +94,9 @@ def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
                                 where application_id = ap.id and time_out is not NULL
 
                                 ) = TRUE
+                            and {"logist_login" if causer.role == RoleEnum.LOGIST else "driver_login"} = %(login)s
                             """,
-                    {"login": login},
+                    {"login": causer.login},
                 )
                 if cur.description:
                     colnames = [desc[0] for desc in cur.description]
@@ -102,22 +106,35 @@ def retrieve_all_completed_for_logist(login: str) -> list[dict[Any, Any]]:
             return []
     return []
 
-
-def retrieve_all_for_logist(login: str) -> list[dict[Any, Any]]:
+def retrieve_awaiting_by_driver(driver_login: str) -> dict[Any, Any]:
     with pool.connection() as con:
         try:
             with con.cursor() as cur:
                 cur.execute(
-                    "SELECT * FROM applications where logist_login = %(login)s",
-                    {"login": login},
+                    f"""
+                            
+                            select * from applications as ap
+                            WHERE ap.awaiting_driver_login = %(login)s
+                            and ap.awaiting_until > NOW()
+
+                            """,
+                    {"login": driver_login},
                 )
-                if cur.description:
-                    colnames = [desc[0] for desc in cur.description]
-                    rows = [dict(zip(colnames, row)) for row in cur.fetchall()]
-                    return rows
+
+                res = cur.fetchone()
+                if res is None:
+                    return {}
+
+                desc = cur.description
+                if desc is None:
+                    return {}
+
+                colnames = [desc[0] for desc in desc]
+                return dict(zip(colnames, res))
+
+
         except Exception:
-            return []
-    return []
+            return {}
 
 
 def create(logist_login: str, data: Application) -> bool:
@@ -502,6 +519,7 @@ def exist_active_with_driver(driver_login: str) -> bool:
             )
 
             data = cur.fetchone()
+            logger.info(data)
             return data != None
 
 

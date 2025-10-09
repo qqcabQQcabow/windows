@@ -4,6 +4,7 @@ from ..infrastructure.data_schemas import (
     SendApplication,
     ApplicationStateEnum,
     RoleEnum,
+    RateDriverForm
 )
 
 from typing import Optional, Tuple, Any
@@ -50,3 +51,23 @@ def profile(causer: JWTPayload) -> Tuple[dict[Any, Any], Optional[str]]:
         return db_users.logist_profile(causer.login), None
     except Exception as e:
         return {}, f"Ошибка. {e}"
+
+
+def rate(causer: JWTPayload, data: RateDriverForm) -> Optional[str]:
+    try:
+        if not causer.role in [RoleEnum.LOGIST]:
+            return "Нет прав"
+
+
+        current_rating, count_rating = db_drivers.get_rating_into(data.driver_login)
+
+        new_raiting = (current_rating*count_rating + data.rate)/(count_rating+1)
+
+        success = db_drivers.udpate_raiting(data.driver_login, new_raiting)
+        if not success:
+            return f"Не удалось обновить рейтинг"
+
+        return None
+
+    except Exception as e:
+        return f"Ошибка. {e}"

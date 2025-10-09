@@ -97,7 +97,8 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
 
     driver_data = {
         "user_login": data.login,
-        "raiting": 0,
+        "rating": 0,
+        "count_rating": 0,
         "passport_numbers": data.passport_numbers,
         "driver_license_numbers": data.driver_license_numbers,
         "job_license_numbers": data.job_license_numbers,
@@ -119,9 +120,9 @@ def add_driver(data: DriverRegistrInfo, hash_p: str, salt_p: str):
 
                 cur.execute(
                     """
-                    insert into drivers (user_login, raiting, passport_numbers, driver_license_numbers,
+                    insert into drivers (user_login, rating, count_rating, passport_numbers, driver_license_numbers,
                                          job_license_numbers, snils_number)
-                    values (%(user_login)s, %(raiting)s, %(passport_numbers)s, %(driver_license_numbers)s,
+                    values (%(user_login)s, %(rating)s,%(count_rating)s, %(passport_numbers)s, %(driver_license_numbers)s,
                             %(job_license_numbers)s, %(snils_number)s)
                 """,
                     driver_data,
@@ -246,7 +247,8 @@ def driver_profile(login: str) -> dict[Any, Any]:
 
                         SELECT
                             d.user_login,
-                            d.raiting,
+                            d.rating,
+                            d.count_rating,
                             d.passport_numbers,
                             d.driver_license_numbers,
                             d.job_license_numbers,

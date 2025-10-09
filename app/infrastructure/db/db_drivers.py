@@ -1,7 +1,7 @@
 from .pool import pool, CONSTRAINT_MESSAGES
 import psycopg
 
-from typing import Optional, Any
+from typing import Optional, Any, Tuple
 from ..data_schemas import TrackForm
 
 
@@ -320,3 +320,61 @@ def retrieve_tracks(driver_login: str) -> list[dict[Any, Any]]:
         except Exception:
             return []
     return []
+
+def get_rating_into(driver_login: str) -> Tuple[float, int]:
+    """
+    return raiting, rate_count
+    """
+    with pool.connection() as con:
+        with con.cursor() as cur:
+            cur.execute(
+                """
+
+                    SELECT
+                        rating, count_rating
+                    FROM
+                        drivers
+                    WHERE
+                        user_login = %(login)s
+
+                    """,
+                {"login": driver_login},
+            )
+
+            res = cur.fetchone()
+            if res is None:
+                raise Exception("Dont found driver!")
+
+            return res
+
+
+def udpate_raiting(driver_login: str, new_raining: float) -> bool:
+    with pool.connection() as con:
+        try:
+            with con.cursor() as cur:
+
+                cur.execute(
+                    """
+
+                        UPDATE DRIVERS
+                        SET rating = %(new_raiting)s,
+                            count_rating = count_rating + 1
+                        WHERE user_login = %(login)s
+
+                        """,
+                    {
+                        "login": driver_login,
+                        "new_raiting": new_raining,
+                    }
+                )
+
+                success = cur.rowcount > 0
+                if success:
+                    con.commit()
+                    return True
+
+                return False
+
+        except Exception:
+            con.rollback()
+            return False

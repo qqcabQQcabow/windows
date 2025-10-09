@@ -58,7 +58,8 @@ CREATE TABLE LOGISTS (
 
 
 CREATE TABLE DRIVERS (
-    raiting INT NOT NULL,
+    rating REAL NOT NULL,
+    count_rating INT NOT NULL,
 
     passport_numbers VARCHAR(11) NOT NULL,
     CONSTRAINT passport_rf_format CHECK (passport_numbers ~ '^\d{4} \d{6}$'),
@@ -223,9 +224,10 @@ values
     '1984-10-09 00:00:00')
 ;
 
-insert into drivers(raiting, passport_numbers, driver_license_numbers, job_license_numbers, snils_number, user_login)
+insert into drivers(rating,count_rating, passport_numbers, driver_license_numbers, job_license_numbers, snils_number, user_login)
 values
 (    0,
+     0,
     '6767 898887',
     '4323 098966',
     '6783452',
@@ -238,7 +240,8 @@ values
 (    'A000AA00',
     'Pejout',
     'Белый',
-    'box')
+    'box',
+    'driver1')
 ;
 
 insert into logists(user_login)

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from app.dependencies import get_jwt_payload
-from ..infrastructure.data_schemas import JWTPayload, SendMessageForm, ReceiptLogin
+from ..infrastructure.data_schemas import JWTPayload, SendMessageForm
 
 router = APIRouter()
 
@@ -15,9 +15,9 @@ async def send_message(
     return {"response": "success"}
 
 
-@router.post("/chat/history", tags=[CHAT_TAG])
+@router.post("/chat/history/{recepient_login}", tags=[CHAT_TAG])
 async def retieve_message_history(
-    data: ReceiptLogin, causer: JWTPayload = Depends(get_jwt_payload)
+    recepient_login: str, causer: JWTPayload = Depends(get_jwt_payload)
 ):
     # TODO IT
     return {"response": "success"}

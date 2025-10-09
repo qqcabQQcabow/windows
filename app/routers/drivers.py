@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from app.dependencies import get_jwt_payload
-from ..infrastructure.data_schemas import JWTPayload, TrackGrz, TrackForm, RoleEnum
+from ..infrastructure.data_schemas import JWTPayload, TrackForm, RoleEnum
 from ..infrastructure.db import db_drivers
 
 from ..use_cases import drivers
@@ -26,11 +26,11 @@ async def retrieve_all_drivers(causer: JWTPayload = Depends(get_jwt_payload)):
     return {"response": res}
 
 
-@router.post("/drivers/startWorkShift", tags=[DRIVER_TAG])
+@router.get("/drivers/startWorkShift/{grz}", tags=[DRIVER_TAG])
 async def start_work_shift(
-    data: TrackGrz, causer: JWTPayload = Depends(get_jwt_payload)
+    grz: str, causer: JWTPayload = Depends(get_jwt_payload)
 ):
-    err = drivers.start_work_shift(causer, data)
+    err = drivers.start_work_shift(causer, grz)
     if err is not None:
         raise HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}
@@ -75,9 +75,9 @@ async def add_track(data: TrackForm, causer: JWTPayload = Depends(get_jwt_payloa
     return {"response": "success"}
 
 
-@router.delete("/drivers/delTrack", tags=[DRIVER_TAG])
-async def del_track(data: TrackGrz, causer: JWTPayload = Depends(get_jwt_payload)):
-    err = drivers.del_track(causer, data)
+@router.delete("/drivers/delTrack/{grz}", tags=[DRIVER_TAG])
+async def del_track(grz: str, causer: JWTPayload = Depends(get_jwt_payload)):
+    err = drivers.del_track(causer, grz)
     if err is not None:
         raise HTTPException(status_code=500, detail=str(err))
     return {"response": "success"}

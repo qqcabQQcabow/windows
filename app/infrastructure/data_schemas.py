@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 import time
 
@@ -55,9 +55,6 @@ class ChangeApplicationDriver(BaseModel):
     new_driver_login: str
 
 
-class ApplicationId(BaseModel):
-    application_id: int
-
 
 # ----------------------------------------------------------------------------------
 
@@ -109,6 +106,12 @@ class LogistRegistrInfo(BaseModel):
     born_date: int
 
 
+class RateDriverForm(BaseModel):
+    driver_login: str
+    rate: int = Field(ge=0, le=5)
+
+
+
 # ----------------------------------------------------------------------------------
 
 
@@ -136,9 +139,6 @@ class SendMessageForm(BaseModel):
     message: str
 
 
-class ReceiptLogin(BaseModel):
-    recepient_login: str
-
 
 # ========================================================================================
 
@@ -149,6 +149,3 @@ class TrackForm(BaseModel):
     color: str
     model: str
 
-
-class TrackGrz(BaseModel):
-    grz: str

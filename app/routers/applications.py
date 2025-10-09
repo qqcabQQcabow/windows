@@ -6,7 +6,6 @@ from ..infrastructure.data_schemas import (
     Application,
     ApplicationState,
     ChangeApplicationDriver,
-    ApplicationId,
     RoleEnum,
 )
 
@@ -76,22 +75,27 @@ async def retrieve_all_new(causer: JWTPayload = Depends(get_jwt_payload)):
 
 @router.get("/applications/allInProcess", tags=[DA_TAG])
 async def retrieve_all_in_process(causer: JWTPayload = Depends(get_jwt_payload)):
-    if causer.role == RoleEnum.LOGIST:
-        return {
-            "response": db_applications.retrieve_all_in_process_for_logist(causer.login)
-        }
+    return {
+        "response": db_applications.retrieve_all_in_process(causer)
+    }
 
-    raise HTTPException(status_code=500, detail=str("Нет прав"))
 
 
 @router.get("/applications/allCompleted", tags=[DA_TAG])
 async def retrieve_all_completed(causer: JWTPayload = Depends(get_jwt_payload)):
-    if causer.role == RoleEnum.LOGIST:
-        return {
-            "response": db_applications.retrieve_all_completed_for_logist(causer.login)
-        }
+    return {
+        "response": db_applications.retrieve_all_completed(causer)
+    }
 
-    raise HTTPException(status_code=500, detail=str("Нет прав"))
+
+@router.get("/applications/awaitingAccept", tags=[DA_TAG])
+async def retrieve_awaitint_accept_by_driver(causer: JWTPayload = Depends(get_jwt_payload)):
+    if not causer.role in [RoleEnum.DRIVER]:
+        raise HTTPException(status_code=500, detail=str("Нет прав"))
+
+    return {
+        "response": db_applications.retrieve_awaiting_by_driver(causer.login)
+    }
 
 
 @router.get("/applications/allStates/{id}", tags=[DA_TAG])
