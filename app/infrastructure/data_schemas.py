@@ -2,10 +2,12 @@ from pydantic import BaseModel
 from enum import Enum
 import time
 
+
 class ContainerType(str, Enum):
     SMALL = "SMALL"
     MEDIUM = "MEDIUM"
     LARGE = "LARGE"
+
 
 class Application(BaseModel):
     container_type: ContainerType
@@ -27,14 +29,15 @@ class Application(BaseModel):
     unloading_contact_phone: str
     notes: str
 
+
 class ApplicationStateEnum(str, Enum):
-   APPLICATION           ='APPLICATION'
-   TERMINAL              ='TERMINAL'
-   WAREHOUSE             ='WAREHOUSE'
-   DEPARTURE_STATION     ='DEPARTURE_STATION'
-   DESTINATION_STATION   ='DESTINATION_STATION'
-   CARGO_DELIVERY        ='CARGO_DELIVERY'
-   EMPTY_CONTAINER_RETURN='EMPTY_CONTAINER_RETURN'
+    APPLICATION = "APPLICATION"
+    TERMINAL = "TERMINAL"
+    WAREHOUSE = "WAREHOUSE"
+    DEPARTURE_STATION = "DEPARTURE_STATION"
+    DESTINATION_STATION = "DESTINATION_STATION"
+    CARGO_DELIVERY = "CARGO_DELIVERY"
+    EMPTY_CONTAINER_RETURN = "EMPTY_CONTAINER_RETURN"
 
 
 class ApplicationState(BaseModel):
@@ -46,14 +49,17 @@ class SendApplication(BaseModel):
     application_id: int
     driver_login: str
 
+
 class ChangeApplicationDriver(BaseModel):
     application_id: int
     new_driver_login: str
 
+
 class ApplicationId(BaseModel):
     application_id: int
 
-#----------------------------------------------------------------------------------
+
+# ----------------------------------------------------------------------------------
 
 
 class DriverRegistrInfo(BaseModel):
@@ -77,14 +83,16 @@ class DriverRegistrInfo(BaseModel):
     snils_numbers: str
 
 
-#----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
+
 
 class LoginInfo(BaseModel):
     login: str
     password: str
 
 
-#------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------
+
 
 class LogistRegistrInfo(BaseModel):
 
@@ -101,7 +109,8 @@ class LogistRegistrInfo(BaseModel):
     born_date: int
 
 
-#----------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------
+
 
 class RoleEnum(str, Enum):
     DRIVER = "DRIVER"
@@ -116,23 +125,23 @@ class JWTPayload(BaseModel):
 
     @classmethod
     def create(cls, login: str, role: RoleEnum, lifetime_sec: int = 3600):
-        return cls(
-            login=login,
-            role=role,
-            exp=int(time.time()) + lifetime_sec
-        )
+        return cls(login=login, role=role, exp=int(time.time()) + lifetime_sec)
 
 
-#-----------------------------------------------------------------------------------
+# -----------------------------------------------------------------------------------
+
 
 class SendMessageForm(BaseModel):
     recepient_login: str
     message: str
 
+
 class ReceiptLogin(BaseModel):
     recepient_login: str
 
-#========================================================================================
+
+# ========================================================================================
+
 
 class TrackForm(BaseModel):
     grz: str

@@ -154,7 +154,6 @@ CREATE TABLE APPLICATIONS (
 );
 
 CREATE TYPE application_state_enum AS ENUM (
-    'APPLICATION',          -- Этап №1. Заявка
     'TERMINAL',             -- Этап №2. Терминал
     'WAREHOUSE',            -- Этап №3. Склад
     'DEPARTURE_STATION',    -- Этап №4. Станция отправления
@@ -196,3 +195,53 @@ CREATE TABLE CHAT_MESSAGES (
 
     message TEXT NOT NULL
 );
+
+insert into users(avatar, login, hash_password, hash_salt, phone, email, name, surname, patronymic, role, born_date)
+values
+(    NULL,
+    'logist1',
+    '$2b$12$LuXVue2l7teoBey8qCgxyebAw7svfGQNs8m6j41mDpxJ7sCzJbfky',
+    '$2b$12$LuXVue2l7teoBey8qCgxye',
+    '78988764454',
+    'ann.alx@mail.ru',
+    'Анна',
+    'Пригожина',
+    'Александровка',
+    'LOGIST',
+    '1994-10-09 00:00:00'),
+
+(    NULL,
+    'driver1',
+    '$2b$12$FHOoTxM.41bfSCEG4YlWYemAhswHG1tnQNUqj5rfXq5h1aY2jBUde',
+    '$2b$12$FHOoTxM.41bfSCEG4YlWYe',
+    '79896789909',
+    'petr.petr@mail.ru',
+    'Петр',
+    'Вуйчич',
+    'Макарович',
+    'DRIVER',
+    '1984-10-09 00:00:00')
+;
+
+insert into drivers(raiting, passport_numbers, driver_license_numbers, job_license_numbers, snils_number, user_login)
+values
+(    0,
+    '6767 898887',
+    '4323 098966',
+    '6783452',
+    '897-232-123-33',
+    'driver1')
+;
+
+insert into tracks(grz, brand, color, model, driver_login)
+values
+(    'A000AA00',
+    'Pejout',
+    'Белый',
+    'box')
+;
+
+insert into logists(user_login)
+values
+(    'logist1')
+;
